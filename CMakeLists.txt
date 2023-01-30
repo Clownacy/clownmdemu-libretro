@@ -20,5 +20,5 @@ set_target_properties(clownmdemu_libretro PROPERTIES
 target_compile_definitions(clownmdemu_libretro PRIVATE __LIBRETRO__)
 
 # Link clownmdemu core.
-add_subdirectory("../" EXCLUDE_FROM_ALL "clownmdemu")
+add_subdirectory("clownmdemu-frontend-common/clownmdemu" EXCLUDE_FROM_ALL)
 target_link_libraries(clownmdemu_libretro clownmdemu)

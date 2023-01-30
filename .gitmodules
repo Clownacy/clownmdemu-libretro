@@ -1,0 +1,3 @@
+[submodule "clownmdemu-frontend-common"]
+	path = clownmdemu-frontend-common
+	url = https://github.com/Clownacy/clownmdemu-frontend-common

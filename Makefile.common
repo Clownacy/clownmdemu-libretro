@@ -1,0 +1,15 @@
+SOURCES_C   := $(CORE_DIR)/libretro.c \
+               $(CORE_DIR)/clownmdemu-frontend-common/clownmdemu/clownmdemu.c \
+               $(CORE_DIR)/clownmdemu-frontend-common/clownmdemu/error.c \
+               $(CORE_DIR)/clownmdemu-frontend-common/clownmdemu/fm.c \
+               $(CORE_DIR)/clownmdemu-frontend-common/clownmdemu/fm_channel.c \
+               $(CORE_DIR)/clownmdemu-frontend-common/clownmdemu/fm_envelope.c \
+               $(CORE_DIR)/clownmdemu-frontend-common/clownmdemu/fm_operator.c \
+               $(CORE_DIR)/clownmdemu-frontend-common/clownmdemu/fm_phase.c \
+               $(CORE_DIR)/clownmdemu-frontend-common/clownmdemu/clown68000/m68k.c \
+               $(CORE_DIR)/clownmdemu-frontend-common/clownmdemu/clown68000/m68k/opcode.c \
+               $(CORE_DIR)/clownmdemu-frontend-common/clownmdemu/psg.c \
+               $(CORE_DIR)/clownmdemu-frontend-common/clownmdemu/vdp.c \
+               $(CORE_DIR)/clownmdemu-frontend-common/clownmdemu/z80.c
+
+SOURCES_CXX := 
