@@ -204,7 +204,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		/* Categorised label. */
 		NULL,
 		/* Description. */
-		"Apply a low-pass filter to the audio, just like on a real Mega Drive.",
+		"Makes the audio sound 'softer', just like on a real Mega Drive.",
 		/* Categorised description. */
 		NULL,
 		/* Category. */
