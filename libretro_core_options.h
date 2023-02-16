@@ -132,6 +132,226 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 	},
 	{
 		/* Key. */
+		"clownmdemu_disable_fm1",
+		/* Label. */
+		"Debug > Disable FM1",
+		/* Categorised label. */
+		"Disable FM1",
+		/* Description. */
+		"Disable the YM2612's FM1 channel.",
+		/* Categorised description. */
+		NULL,
+		/* Category. */
+		"debug",
+		/* Values. */
+		{
+			{"enabled", NULL},
+			{"disabled", NULL},
+			{NULL, NULL},
+		},
+		/* Default value. */
+		"disabled"
+	},
+	{
+		/* Key. */
+		"clownmdemu_disable_fm2",
+		/* Label. */
+		"Debug > Disable FM2",
+		/* Categorised label. */
+		"Disable FM2",
+		/* Description. */
+		"Disable the YM2612's FM2 channel.",
+		/* Categorised description. */
+		NULL,
+		/* Category. */
+		"debug",
+		/* Values. */
+		{
+			{"enabled", NULL},
+			{"disabled", NULL},
+			{NULL, NULL},
+		},
+		/* Default value. */
+		"disabled"
+	},
+	{
+		/* Key. */
+		"clownmdemu_disable_fm3",
+		/* Label. */
+		"Debug > Disable FM3",
+		/* Categorised label. */
+		"Disable FM3",
+		/* Description. */
+		"Disable the YM2612's FM3 channel.",
+		/* Categorised description. */
+		NULL,
+		/* Category. */
+		"debug",
+		/* Values. */
+		{
+			{"enabled", NULL},
+			{"disabled", NULL},
+			{NULL, NULL},
+		},
+		/* Default value. */
+		"disabled"
+	},
+	{
+		/* Key. */
+		"clownmdemu_disable_fm4",
+		/* Label. */
+		"Debug > Disable FM4",
+		/* Categorised label. */
+		"Disable FM4",
+		/* Description. */
+		"Disable the YM2612's FM4 channel.",
+		/* Categorised description. */
+		NULL,
+		/* Category. */
+		"debug",
+		/* Values. */
+		{
+			{"enabled", NULL},
+			{"disabled", NULL},
+			{NULL, NULL},
+		},
+		/* Default value. */
+		"disabled"
+	},
+	{
+		/* Key. */
+		"clownmdemu_disable_fm5",
+		/* Label. */
+		"Debug > Disable FM5",
+		/* Categorised label. */
+		"Disable FM5",
+		/* Description. */
+		"Disable the YM2612's FM5 channel.",
+		/* Categorised description. */
+		NULL,
+		/* Category. */
+		"debug",
+		/* Values. */
+		{
+			{"enabled", NULL},
+			{"disabled", NULL},
+			{NULL, NULL},
+		},
+		/* Default value. */
+		"disabled"
+	},
+	{
+		/* Key. */
+		"clownmdemu_disable_fm6",
+		/* Label. */
+		"Debug > Disable FM6/DAC",
+		/* Categorised label. */
+		"Disable FM6/DAC",
+		/* Description. */
+		"Disable the YM2612's FM6/DAC channel.",
+		/* Categorised description. */
+		NULL,
+		/* Category. */
+		"debug",
+		/* Values. */
+		{
+			{"enabled", NULL},
+			{"disabled", NULL},
+			{NULL, NULL},
+		},
+		/* Default value. */
+		"disabled"
+	},
+	{
+		/* Key. */
+		"clownmdemu_disable_psg1",
+		/* Label. */
+		"Debug > Disable PSG1",
+		/* Categorised label. */
+		"Disable PSG1",
+		/* Description. */
+		"Disable the SN76496's PSG1 channel.",
+		/* Categorised description. */
+		NULL,
+		/* Category. */
+		"debug",
+		/* Values. */
+		{
+			{"enabled", NULL},
+			{"disabled", NULL},
+			{NULL, NULL},
+		},
+		/* Default value. */
+		"disabled"
+	},
+	{
+		/* Key. */
+		"clownmdemu_disable_psg2",
+		/* Label. */
+		"Debug > Disable PSG2",
+		/* Categorised label. */
+		"Disable PSG2",
+		/* Description. */
+		"Disable the SN76496's PSG2 channel.",
+		/* Categorised description. */
+		NULL,
+		/* Category. */
+		"debug",
+		/* Values. */
+		{
+			{"enabled", NULL},
+			{"disabled", NULL},
+			{NULL, NULL},
+		},
+		/* Default value. */
+		"disabled"
+	},
+	{
+		/* Key. */
+		"clownmdemu_disable_psg3",
+		/* Label. */
+		"Debug > Disable PSG3",
+		/* Categorised label. */
+		"Disable PSG3",
+		/* Description. */
+		"Disable the SN76496's PSG3 channel.",
+		/* Categorised description. */
+		NULL,
+		/* Category. */
+		"debug",
+		/* Values. */
+		{
+			{"enabled", NULL},
+			{"disabled", NULL},
+			{NULL, NULL},
+		},
+		/* Default value. */
+		"disabled"
+	},
+	{
+		/* Key. */
+		"clownmdemu_disable_psg_noise",
+		/* Label. */
+		"Debug > Disable PSG Noise",
+		/* Categorised label. */
+		"Disable PSG Noise",
+		/* Description. */
+		"Disable the SN76496's PSG Noise channel.",
+		/* Categorised description. */
+		NULL,
+		/* Category. */
+		"debug",
+		/* Values. */
+		{
+			{"enabled", NULL},
+			{"disabled", NULL},
+			{NULL, NULL},
+		},
+		/* Default value. */
+		"disabled"
+	},
+	{
+		/* Key. */
 		"clownmdemu_tv_standard",
 		/* Label. */
 		"TV Standard",

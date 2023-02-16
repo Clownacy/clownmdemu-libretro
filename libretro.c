@@ -367,6 +367,16 @@ static void UpdateOptions(cc_bool only_update_flags)
 	clownmdemu_configuration.vdp.planes_disabled[0] = DoOptionBoolean("clownmdemu_disable_plane_a", "enabled");
 	clownmdemu_configuration.vdp.planes_disabled[1] = DoOptionBoolean("clownmdemu_disable_plane_b", "enabled");
 	clownmdemu_configuration.vdp.sprites_disabled = DoOptionBoolean("clownmdemu_disable_sprite_plane", "enabled");
+	clownmdemu_configuration.fm.channel_disabled[0] = DoOptionBoolean("clownmdemu_disable_fm1", "enabled");
+	clownmdemu_configuration.fm.channel_disabled[1] = DoOptionBoolean("clownmdemu_disable_fm2", "enabled");
+	clownmdemu_configuration.fm.channel_disabled[2] = DoOptionBoolean("clownmdemu_disable_fm3", "enabled");
+	clownmdemu_configuration.fm.channel_disabled[3] = DoOptionBoolean("clownmdemu_disable_fm4", "enabled");
+	clownmdemu_configuration.fm.channel_disabled[4] = DoOptionBoolean("clownmdemu_disable_fm5", "enabled");
+	clownmdemu_configuration.fm.channel_disabled[5] = DoOptionBoolean("clownmdemu_disable_fm6", "enabled");
+	clownmdemu_configuration.psg.tone_disabled[0] = DoOptionBoolean("clownmdemu_disable_psg1", "enabled");
+	clownmdemu_configuration.psg.tone_disabled[1] = DoOptionBoolean("clownmdemu_disable_psg2", "enabled");
+	clownmdemu_configuration.psg.tone_disabled[2] = DoOptionBoolean("clownmdemu_disable_psg3", "enabled");
+	clownmdemu_configuration.psg.noise_disabled = DoOptionBoolean("clownmdemu_disable_psg_noise", "enabled");
 }
 
 void retro_init(void)
