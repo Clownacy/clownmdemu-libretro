@@ -66,6 +66,50 @@ struct retro_core_option_v2_category option_cats_us[] = {
 struct retro_core_option_v2_definition option_defs_us[] = {
 	{
 		/* Key. */
+		"clownmdemu_disable_sprite_plane",
+		/* Label. */
+		"Debug > Disable Sprite Plane",
+		/* Categorised label. */
+		"Disable Sprite Plane",
+		/* Description. */
+		"Disable the VDP's Sprite Plane.",
+		/* Categorised description. */
+		NULL,
+		/* Category. */
+		"debug",
+		/* Values. */
+		{
+			{"enabled", NULL},
+			{"disabled", NULL},
+			{NULL, NULL},
+		},
+		/* Default value. */
+		"disabled"
+	},
+	{
+		/* Key. */
+		"clownmdemu_disable_window_plane",
+		/* Label. */
+		"Debug > Disable Window Plane",
+		/* Categorised label. */
+		"Disable Window Plane",
+		/* Description. */
+		"Disable the VDP's Window Plane.",
+		/* Categorised description. */
+		NULL,
+		/* Category. */
+		"debug",
+		/* Values. */
+		{
+			{"enabled", NULL},
+			{"disabled", NULL},
+			{NULL, NULL},
+		},
+		/* Default value. */
+		"disabled"
+	},
+	{
+		/* Key. */
 		"clownmdemu_disable_plane_a",
 		/* Label. */
 		"Debug > Disable Plane A",
@@ -95,28 +139,6 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		"Disable Plane B",
 		/* Description. */
 		"Disable the VDP's Plane B.",
-		/* Categorised description. */
-		NULL,
-		/* Category. */
-		"debug",
-		/* Values. */
-		{
-			{"enabled", NULL},
-			{"disabled", NULL},
-			{NULL, NULL},
-		},
-		/* Default value. */
-		"disabled"
-	},
-	{
-		/* Key. */
-		"clownmdemu_disable_sprite_plane",
-		/* Label. */
-		"Debug > Disable Sprite Plane",
-		/* Categorised label. */
-		"Disable Sprite Plane",
-		/* Description. */
-		"Disable the VDP's Sprite Plane.",
 		/* Categorised description. */
 		NULL,
 		/* Category. */
@@ -244,11 +266,33 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		/* Key. */
 		"clownmdemu_disable_fm6",
 		/* Label. */
-		"Debug > Disable FM6/DAC",
+		"Debug > Disable FM6",
 		/* Categorised label. */
-		"Disable FM6/DAC",
+		"Disable FM6",
 		/* Description. */
-		"Disable the YM2612's FM6/DAC channel.",
+		"Disable the YM2612's FM6 channel.",
+		/* Categorised description. */
+		NULL,
+		/* Category. */
+		"debug",
+		/* Values. */
+		{
+			{"enabled", NULL},
+			{"disabled", NULL},
+			{NULL, NULL},
+		},
+		/* Default value. */
+		"disabled"
+	},
+	{
+		/* Key. */
+		"clownmdemu_disable_dac",
+		/* Label. */
+		"Debug > Disable DAC",
+		/* Categorised label. */
+		"Disable DAC",
+		/* Description. */
+		"Disable the YM2612's DAC channel.",
 		/* Categorised description. */
 		NULL,
 		/* Category. */

@@ -364,15 +364,17 @@ static void UpdateOptions(cc_bool only_update_flags)
 
 	clownmdemu_configuration.general.region = DoOptionBoolean("clownmdemu_overseas_region", "elsewhere") ? CLOWNMDEMU_REGION_OVERSEAS : CLOWNMDEMU_REGION_DOMESTIC;
 	clownmdemu_configuration.general.tv_standard = pal_mode_enabled ? CLOWNMDEMU_TV_STANDARD_PAL : CLOWNMDEMU_TV_STANDARD_NTSC;
+	clownmdemu_configuration.vdp.sprites_disabled = DoOptionBoolean("clownmdemu_disable_sprite_plane", "enabled");
+	clownmdemu_configuration.vdp.window_disabled = DoOptionBoolean("clownmdemu_disable_window_plane", "enabled");
 	clownmdemu_configuration.vdp.planes_disabled[0] = DoOptionBoolean("clownmdemu_disable_plane_a", "enabled");
 	clownmdemu_configuration.vdp.planes_disabled[1] = DoOptionBoolean("clownmdemu_disable_plane_b", "enabled");
-	clownmdemu_configuration.vdp.sprites_disabled = DoOptionBoolean("clownmdemu_disable_sprite_plane", "enabled");
-	clownmdemu_configuration.fm.channel_disabled[0] = DoOptionBoolean("clownmdemu_disable_fm1", "enabled");
-	clownmdemu_configuration.fm.channel_disabled[1] = DoOptionBoolean("clownmdemu_disable_fm2", "enabled");
-	clownmdemu_configuration.fm.channel_disabled[2] = DoOptionBoolean("clownmdemu_disable_fm3", "enabled");
-	clownmdemu_configuration.fm.channel_disabled[3] = DoOptionBoolean("clownmdemu_disable_fm4", "enabled");
-	clownmdemu_configuration.fm.channel_disabled[4] = DoOptionBoolean("clownmdemu_disable_fm5", "enabled");
-	clownmdemu_configuration.fm.channel_disabled[5] = DoOptionBoolean("clownmdemu_disable_fm6", "enabled");
+	clownmdemu_configuration.fm.fm_channels_disabled[0] = DoOptionBoolean("clownmdemu_disable_fm1", "enabled");
+	clownmdemu_configuration.fm.fm_channels_disabled[1] = DoOptionBoolean("clownmdemu_disable_fm2", "enabled");
+	clownmdemu_configuration.fm.fm_channels_disabled[2] = DoOptionBoolean("clownmdemu_disable_fm3", "enabled");
+	clownmdemu_configuration.fm.fm_channels_disabled[3] = DoOptionBoolean("clownmdemu_disable_fm4", "enabled");
+	clownmdemu_configuration.fm.fm_channels_disabled[4] = DoOptionBoolean("clownmdemu_disable_fm5", "enabled");
+	clownmdemu_configuration.fm.fm_channels_disabled[5] = DoOptionBoolean("clownmdemu_disable_fm6", "enabled");
+	clownmdemu_configuration.fm.dac_channel_disabled = DoOptionBoolean("clownmdemu_disable_dac", "enabled");
 	clownmdemu_configuration.psg.tone_disabled[0] = DoOptionBoolean("clownmdemu_disable_psg1", "enabled");
 	clownmdemu_configuration.psg.tone_disabled[1] = DoOptionBoolean("clownmdemu_disable_psg2", "enabled");
 	clownmdemu_configuration.psg.tone_disabled[2] = DoOptionBoolean("clownmdemu_disable_psg3", "enabled");
