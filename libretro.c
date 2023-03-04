@@ -10,7 +10,7 @@
 #include "clownmdemu-frontend-common/clownmdemu/clownmdemu.h"
 
 #define MIXER_FORMAT int16_t
-#include "clownmdemu-frontend-common/mixer.c"
+#include "clownmdemu-frontend-common/mixer.h"
 
 #define FRAMEBUFFER_WIDTH 320
 #define FRAMEBUFFER_HEIGHT 480
@@ -68,7 +68,7 @@ static struct
 	CC_ATTRIBUTE_PRINTF(2, 3) retro_log_printf_t log;
 } libretro_callbacks;
 
-static cc_u16f CartridgeReadCallback(const void *user_data, cc_u32f address)
+static cc_u8f CartridgeReadCallback(const void *user_data, cc_u32f address)
 {
 	(void)user_data;
 
@@ -78,7 +78,7 @@ static cc_u16f CartridgeReadCallback(const void *user_data, cc_u32f address)
 		return rom[address];
 }
 
-static void CartridgeWriteCallback(const void *user_data, cc_u32f address, cc_u16f value)
+static void CartridgeWriteCallback(const void *user_data, cc_u32f address, cc_u8f value)
 {
 	(void)user_data;
 	(void)address;
@@ -230,7 +230,7 @@ static void ScanlineRenderedCallback(const void *user_data, cc_u16f scanline, co
 	}
 }
 
-static cc_bool InputRequestedCallback(const void *user_data, cc_u16f player_id, ClownMDEmu_Button button_id)
+static cc_bool InputRequestedCallback(const void *user_data, cc_u8f player_id, ClownMDEmu_Button button_id)
 {
 	cc_u16f libretro_button_id;
 
