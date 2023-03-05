@@ -433,7 +433,7 @@ void retro_set_controller_port_device(unsigned int port, unsigned int device)
 void retro_get_system_info(struct retro_system_info *info)
 {
 	info->library_name     = "clownmdemu";
-	info->library_version  = "v0.2.1";
+	info->library_version  = "v0.2.2";
 	info->need_fullpath    = false;
 	info->valid_extensions = "bin|md|gen";
 	info->block_extract    = false;
