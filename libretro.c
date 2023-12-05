@@ -333,7 +333,7 @@ CC_ATTRIBUTE_PRINTF(2, 3) static void FallbackErrorLogCallback(const enum retro_
 
 static void ClownMDEmuErrorLog(void* const user_data, const char* const format, va_list arg)
 {
-	/* libretro lacks an error log callback that takes a va_list for some dumbass reason,
+	/* libretro lacks an error log callback that takes a va_list,
 	   so we'll have to expand the message to a plain string here. */
 	char message_buffer[0x100];
 
