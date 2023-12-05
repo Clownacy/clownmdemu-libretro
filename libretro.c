@@ -287,11 +287,15 @@ static void PSGAudioToBeGeneratedCallback(void* const user_data, const size_t to
 
 static void CDSeekCallback(void* const user_data, const cc_u32f sector_index)
 {
+	(void)user_data;
+	(void)sector_index;
 }
 
 static const cc_u8l* CDSectorReadCallback(void* const user_data)
 {
 	static cc_u8l sector_buffer[2048];
+
+	(void)user_data;
 
 	return sector_buffer;
 }
