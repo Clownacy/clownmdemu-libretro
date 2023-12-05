@@ -496,7 +496,7 @@ void retro_get_system_av_info(struct retro_system_av_info* const info)
 	/* Populate the 'retro_system_av_info' struct. */
 	SetGeometry(&info->geometry);
 
-	info->timing.fps = pal_mode_enabled ? 50.0 : 60.0 / 1.001;	/* Standard PAL and NTSC framerates. */
+	info->timing.fps = pal_mode_enabled ? CLOWNMDEMU_MULTIPLY_BY_PAL_FRAMERATE(1.0) : CLOWNMDEMU_MULTIPLY_BY_NTSC_FRAMERATE(1.0);	/* Standard PAL and NTSC framerates. */
 	info->timing.sample_rate = lowpass_filter_enabled ? (double)SAMPLE_RATE_WITH_LOWPASS : (double)SAMPLE_RATE_NO_LOWPASS;
 }
 
