@@ -593,7 +593,7 @@ void retro_reset(void)
 	ClownMDEmu_Reset(&clownmdemu, &clownmdemu_callbacks, cc_false); /* TODO: CD support. */
 }
 
-static void MixerCompleteCallback(const void* const user_data, int16_t* const audio_samples, const size_t total_frames)
+static void MixerCompleteCallback(void* const user_data, const int16_t* const audio_samples, const size_t total_frames)
 {
 	(void)user_data;
 
