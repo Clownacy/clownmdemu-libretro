@@ -401,10 +401,19 @@ static void UpdateOptions(const cc_bool only_update_flags)
 	clownmdemu_configuration.fm.fm_channels_disabled[4] = DoOptionBoolean("clownmdemu_disable_fm5", "enabled");
 	clownmdemu_configuration.fm.fm_channels_disabled[5] = DoOptionBoolean("clownmdemu_disable_fm6", "enabled");
 	clownmdemu_configuration.fm.dac_channel_disabled = DoOptionBoolean("clownmdemu_disable_dac", "enabled");
+	clownmdemu_configuration.fm.ladder_effect_disabled = !DoOptionBoolean("clownmdemu_ladder_effect", "enabled");
 	clownmdemu_configuration.psg.tone_disabled[0] = DoOptionBoolean("clownmdemu_disable_psg1", "enabled");
 	clownmdemu_configuration.psg.tone_disabled[1] = DoOptionBoolean("clownmdemu_disable_psg2", "enabled");
 	clownmdemu_configuration.psg.tone_disabled[2] = DoOptionBoolean("clownmdemu_disable_psg3", "enabled");
 	clownmdemu_configuration.psg.noise_disabled = DoOptionBoolean("clownmdemu_disable_psg_noise", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[0] = DoOptionBoolean("clownmdemu_disable_pcm1", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[1] = DoOptionBoolean("clownmdemu_disable_pcm2", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[2] = DoOptionBoolean("clownmdemu_disable_pcm3", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[3] = DoOptionBoolean("clownmdemu_disable_pcm4", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[4] = DoOptionBoolean("clownmdemu_disable_pcm5", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[5] = DoOptionBoolean("clownmdemu_disable_pcm6", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[6] = DoOptionBoolean("clownmdemu_disable_pcm7", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[7] = DoOptionBoolean("clownmdemu_disable_pcm8", "enabled");
 }
 
 void retro_init(void)

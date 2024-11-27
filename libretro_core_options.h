@@ -394,6 +394,38 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		/* Default value. */
 		"disabled"
 	},
+#define DO_PCM_CHANNEL(NUMBER) \
+	{ \
+		/* Key. */ \
+		"clownmdemu_disable_pcm" NUMBER, \
+		/* Label. */ \
+		"Debug > Disable PCM" NUMBER, \
+		/* Categorised label. */ \
+		"Disable PCM" NUMBER, \
+		/* Description. */ \
+		"Disable the RF5C164's PCM" NUMBER " channel.", \
+		/* Categorised description. */ \
+		NULL, \
+		/* Category. */ \
+		"debug", \
+		/* Values. */ \
+		{ \
+			{"enabled", NULL}, \
+			{"disabled", NULL}, \
+			{NULL, NULL}, \
+		}, \
+		/* Default value. */ \
+		"disabled" \
+	},
+	DO_PCM_CHANNEL("1")
+	DO_PCM_CHANNEL("2")
+	DO_PCM_CHANNEL("3")
+	DO_PCM_CHANNEL("4")
+	DO_PCM_CHANNEL("5")
+	DO_PCM_CHANNEL("6")
+	DO_PCM_CHANNEL("7")
+	DO_PCM_CHANNEL("8")
+#undef DO_PCM_CHANNEL
 	{
 		/* Key. */
 		"clownmdemu_tv_standard",
@@ -469,6 +501,28 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		NULL,
 		/* Description. */
 		"Makes the audio sound 'softer', just like on a real Mega Drive.",
+		/* Categorised description. */
+		NULL,
+		/* Category. */
+		NULL,
+		/* Values. */
+		{
+			{"enabled", NULL},
+			{"disabled", NULL},
+			{NULL, NULL},
+		},
+		/* Default value. */
+		"enabled"
+	},
+	{
+		/* Key. */
+		"clownmdemu_ladder_effect",
+		/* Label. */
+		"Low-Volume Distortion",
+		/* Categorised label. */
+		NULL,
+		/* Description. */
+		"Approximates the so-called 'ladder effect' that is present in early Mega Drives. Without this, certain sounds in some games will be too quiet.",
 		/* Categorised description. */
 		NULL,
 		/* Category. */
