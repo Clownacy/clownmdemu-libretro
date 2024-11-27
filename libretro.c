@@ -28,8 +28,8 @@ static const Mixer mixer = {&mixer_constant, &mixer_state};
 static ClownMDEmu_Configuration clownmdemu_configuration;
 static ClownMDEmu_Constant clownmdemu_constant;
 static ClownMDEmu_State clownmdemu_state;
-static const ClownMDEmu clownmdemu = CLOWNMDEMU_PARAMETERS_INITIALISE(&clownmdemu_configuration, &clownmdemu_constant, &clownmdemu_state);
 static ClownMDEmu_Callbacks clownmdemu_callbacks;
+static const ClownMDEmu clownmdemu = CLOWNMDEMU_PARAMETERS_INITIALISE(&clownmdemu_configuration, &clownmdemu_constant, &clownmdemu_state, &clownmdemu_callbacks);
 
 /* Frontend data. */
 static union
@@ -271,18 +271,32 @@ static cc_bool InputRequestedCallback(void* const user_data, const cc_u8f player
 	return libretro_callbacks.input_state(player_id, RETRO_DEVICE_JOYPAD, 0, libretro_button_id);
 }
 
-static void FMAudioToBeGeneratedCallback(void* const user_data, const size_t total_frames, void (* const generate_fm_audio)(const ClownMDEmu *clownmdemu, cc_s16l *sample_buffer, size_t total_frames))
+static void FMAudioToBeGeneratedCallback(void* const user_data, const ClownMDEmu* const clownmdemu, const size_t total_frames, void (* const generate_fm_audio)(const ClownMDEmu *clownmdemu, cc_s16l *sample_buffer, size_t total_frames))
 {
 	(void)user_data;
 
-	generate_fm_audio(&clownmdemu, Mixer_AllocateFMSamples(&mixer, total_frames), total_frames);
+	generate_fm_audio(clownmdemu, Mixer_AllocateFMSamples(&mixer, total_frames), total_frames);
 }
 
-static void PSGAudioToBeGeneratedCallback(void* const user_data, const size_t total_samples, void (* const generate_psg_audio)(const ClownMDEmu *clownmdemu, cc_s16l *sample_buffer, size_t total_samples))
+static void PSGAudioToBeGeneratedCallback(void* const user_data, const ClownMDEmu* const clownmdemu, const size_t total_samples, void (* const generate_psg_audio)(const ClownMDEmu *clownmdemu, cc_s16l *sample_buffer, size_t total_samples))
 {
 	(void)user_data;
 
-	generate_psg_audio(&clownmdemu, Mixer_AllocatePSGSamples(&mixer, total_samples), total_samples);
+	generate_psg_audio(clownmdemu, Mixer_AllocatePSGSamples(&mixer, total_samples), total_samples);
+}
+
+static void PCMAudioToBeGeneratedCallback(void* const user_data, const ClownMDEmu* const clownmdemu, const size_t total_frames, void (* const generate_pcm_audio)(const ClownMDEmu *clownmdemu, cc_s16l *sample_buffer, size_t total_frames))
+{
+	(void)user_data;
+
+	generate_pcm_audio(clownmdemu, Mixer_AllocatePCMSamples(&mixer, total_frames), total_frames);
+}
+
+static void CDDAAudioToBeGeneratedCallback(void* const user_data, const ClownMDEmu* const clownmdemu, const size_t total_frames, void (* const generate_cdda_audio)(const ClownMDEmu *clownmdemu, cc_s16l *sample_buffer, size_t total_frames))
+{
+	(void)user_data;
+
+	generate_cdda_audio(clownmdemu, Mixer_AllocateCDDASamples(&mixer, total_frames), total_frames);
 }
 
 static void CDSeekCallback(void* const user_data, const cc_u32f sector_index)
@@ -331,13 +345,13 @@ CC_ATTRIBUTE_PRINTF(2, 3) static void FallbackErrorLogCallback(const enum retro_
 	va_end(args);
 }
 
-static void ClownMDEmuErrorLog(void* const user_data, const char* const format, va_list arg)
+static void ClownMDEmuLog(void* const user_data, const char* const format, va_list arg)
 {
 	/* libretro lacks an error log callback that takes a va_list,
 	   so we'll have to expand the message to a plain string here. */
 	char message_buffer[0x100];
 
-	(void) user_data;
+	(void)user_data;
 
 	/* TODO: This unbounded printf is so gross... */
 	vsprintf(message_buffer, format, arg);
@@ -410,14 +424,16 @@ void retro_init(void)
 	clownmdemu_callbacks.input_requested = InputRequestedCallback;
 	clownmdemu_callbacks.fm_audio_to_be_generated = FMAudioToBeGeneratedCallback;
 	clownmdemu_callbacks.psg_audio_to_be_generated = PSGAudioToBeGeneratedCallback;
+	clownmdemu_callbacks.pcm_audio_to_be_generated = PCMAudioToBeGeneratedCallback;
+	clownmdemu_callbacks.cdda_audio_to_be_generated = CDDAAudioToBeGeneratedCallback;
 	clownmdemu_callbacks.cd_seeked = CDSeekCallback;
 	clownmdemu_callbacks.cd_sector_read = CDSectorReadCallback;
 
 	UpdateOptions(cc_true);
 
-	ClownMDEmu_SetErrorCallback(ClownMDEmuErrorLog, NULL);
+	ClownMDEmu_SetLogCallback(ClownMDEmuLog, NULL);
 
-	ClownMDEmu_Constant_Initialise(&clownmdemu_constant);
+	clownmdemu_constant = ClownMDEmu_Constant_Initialise();
 	ClownMDEmu_State_Initialise(&clownmdemu_state);
 
 	/* Initialise the mixer. */
@@ -446,7 +462,7 @@ void retro_set_controller_port_device(const unsigned int port, const unsigned in
 void retro_get_system_info(struct retro_system_info* const info)
 {
 	info->library_name     = "clownmdemu";
-	info->library_version  = "v0.2.3";
+	info->library_version  = "v0.9";
 	info->need_fullpath    = false;
 	info->valid_extensions = "bin|md|gen";
 	info->block_extract    = false;
@@ -590,10 +606,10 @@ void retro_set_video_refresh(const retro_video_refresh_t video_callback)
 
 void retro_reset(void)
 {
-	ClownMDEmu_Reset(&clownmdemu, &clownmdemu_callbacks, cc_false); /* TODO: CD support. */
+	ClownMDEmu_Reset(&clownmdemu, cc_false); /* TODO: CD support. */
 }
 
-static void MixerCompleteCallback(void* const user_data, const int16_t* const audio_samples, const size_t total_frames)
+static void MixerCompleteCallback(void* const user_data, const MIXER_FORMAT* const audio_samples, const size_t total_frames)
 {
 	(void)user_data;
 
@@ -613,7 +629,7 @@ void retro_run(void)
 
 	Mixer_Begin(&mixer);
 
-	ClownMDEmu_Iterate(&clownmdemu, &clownmdemu_callbacks);
+	ClownMDEmu_Iterate(&clownmdemu);
 
 	Mixer_End(&mixer, 1, 1, MixerCompleteCallback, NULL);
 
@@ -635,7 +651,7 @@ bool retro_load_game(const struct retro_game_info* const info)
 	rom_size = info->size;
 
 	/* Boot the emulated Mega Drive. */
-	ClownMDEmu_Reset(&clownmdemu, &clownmdemu_callbacks, cc_false); /* TODO: CD support. */
+	ClownMDEmu_Reset(&clownmdemu, cc_false); /* TODO: CD support. */
 
 	return true;
 }
