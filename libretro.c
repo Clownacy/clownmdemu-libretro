@@ -343,7 +343,7 @@ static void ClownMDEmuErrorLog(void* const user_data, const char* const format, 
 	vsprintf(message_buffer, format, arg);
 	strcat(message_buffer, "\n");
 
-	libretro_callbacks.log(RETRO_LOG_WARN, message_buffer);
+	libretro_callbacks.log(RETRO_LOG_WARN, "%s", message_buffer);
 }
 
 static cc_bool DoOptionBoolean(const char* const key, const char* const true_value)
