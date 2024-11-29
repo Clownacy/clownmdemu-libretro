@@ -6,12 +6,12 @@
 #include "libretro.h"
 #include "libretro_core_options.h"
 
-#include "clownmdemu-frontend-common/clownmdemu/clowncommon/clowncommon.h"
-#include "clownmdemu-frontend-common/clownmdemu/clownmdemu.h"
+#include "common/clownmdemu/clowncommon/clowncommon.h"
+#include "common/clownmdemu/clownmdemu.h"
 
 #define MIXER_IMPLEMENTATION
 #define MIXER_FORMAT int16_t
-#include "clownmdemu-frontend-common/mixer.h"
+#include "common/mixer.h"
 
 #define FRAMEBUFFER_WIDTH 320
 #define FRAMEBUFFER_HEIGHT 480
