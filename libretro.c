@@ -397,6 +397,7 @@ static void UpdateOptions(const cc_bool only_update_flags)
 
 	if ((lowpass_filter_changed || pal_mode_changed) && !only_update_flags)
 	{
+		Mixer_State_Deinitialise(&mixer_state);
 		Mixer_State_Initialise(&mixer_state, lowpass_filter_enabled ? SAMPLE_RATE_WITH_LOWPASS : SAMPLE_RATE_NO_LOWPASS, pal_mode_enabled, cc_false);
 
 		{
@@ -472,6 +473,7 @@ void retro_init(void)
 
 void retro_deinit(void)
 {
+	Mixer_State_Deinitialise(&mixer_state);
 }
 
 unsigned int retro_api_version(void)
