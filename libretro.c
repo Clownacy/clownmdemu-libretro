@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 
+/* For file IO stuff. */
+#include <stdlib.h>
+
 #include "libretro.h"
 #include "libretro_core_options.h"
 
@@ -52,6 +55,7 @@ static void (*scanline_rendered_callback)(void *user_data, const cc_u8l *source_
 static void (*fallback_colour_updated_callback)(void *user_data, cc_u16f index, cc_u16f colour);
 static void (*fallback_scanline_rendered_callback)(void *user_data, const cc_u8l *source_pixels, void *destination_pixels, unsigned int screen_width);
 
+static unsigned char *local_rom_buffer;
 static const unsigned char *rom;
 static size_t rom_size;
 static cc_bool pal_mode_enabled;
@@ -488,7 +492,7 @@ void retro_get_system_info(struct retro_system_info* const info)
 {
 	info->library_name     = "clownmdemu";
 	info->library_version  = "v0.9";
-	info->need_fullpath    = false;
+	info->need_fullpath    = true;
 	info->valid_extensions = "bin|md|gen";
 	info->block_extract    = false;
 }
@@ -679,19 +683,58 @@ void retro_run(void)
 
 bool retro_load_game(const struct retro_game_info* const info)
 {
+	rom = local_rom_buffer = NULL;
+
 	/* Initialise the ROM. */
-	rom = (const unsigned char*)info->data;
-	rom_size = info->size;
+	if (info->data != NULL)
+	{
+		rom = (const unsigned char*)info->data;
+		rom_size = info->size;
+	}
+	else
+	{
+		FILE* const file = fopen(info->path, "rb");
+
+		if (file != NULL)
+		{
+			if (fseek(file, 0, SEEK_END) == 0)
+			{
+				const long position = ftell(file);
+
+				if (position >= 0)
+				{
+					const size_t file_size = (size_t)position;
+					unsigned char *file_buffer = (unsigned char*)malloc(file_size);
+
+					if (file_buffer != NULL)
+					{
+						rewind(file);
+
+						if (fread(file_buffer, 1, file_size, file) == file_size)
+						{
+							rom = local_rom_buffer = file_buffer;
+							rom_size = file_size;
+							file_buffer = NULL;
+						}
+
+						free(file_buffer);
+					}
+				}
+			}
+
+			fclose(file);
+		}
+	}
 
 	/* Boot the emulated Mega Drive. */
 	ClownMDEmu_Reset(&clownmdemu, cc_false); /* TODO: CD support. */
 
-	return true;
+	return rom != NULL;
 }
 
 void retro_unload_game(void)
 {
-	/* Nothing to do here... */
+	free(local_rom_buffer);
 }
 
 unsigned int retro_get_region(void)
