@@ -9,7 +9,7 @@
 #include "libretro.h"
 #include "libretro_core_options.h"
 
-#include "common/clownmdemu/clowncommon/clowncommon.h"
+#include "common/cd-reader.h"
 #include "common/clownmdemu/clownmdemu.h"
 
 #define MIXER_IMPLEMENTATION
@@ -58,6 +58,9 @@ static void (*fallback_scanline_rendered_callback)(void *user_data, const cc_u8l
 static unsigned char *local_rom_buffer;
 static const unsigned char *rom;
 static size_t rom_size;
+
+static CDReader_State cd_reader;
+
 static cc_bool pal_mode_enabled;
 static cc_bool tall_interlace_mode_2;
 static cc_bool lowpass_filter_enabled;
@@ -322,16 +325,53 @@ static void CDDAAudioToBeGeneratedCallback(void* const user_data, const ClownMDE
 static void CDSeekCallback(void* const user_data, const cc_u32f sector_index)
 {
 	(void)user_data;
-	(void)sector_index;
+
+	CDReader_SeekToSector(&cd_reader, sector_index);
 }
 
 static const cc_u8l* CDSectorReadCallback(void* const user_data)
 {
-	static cc_u8l sector_buffer[2048];
+	static CDReader_Sector sector;
 
 	(void)user_data;
 
-	return sector_buffer;
+	CDReader_ReadSector(&cd_reader, &sector);
+	return sector;
+}
+
+static cc_bool CDSeekTrackCallback(void* const user_data, const cc_u16f track_index, const ClownMDEmu_CDDAMode mode)
+{
+	CDReader_PlaybackSetting playback_setting;
+
+	(void)user_data;
+
+	switch (mode)
+	{
+		default:
+			assert(cc_false);
+			return cc_false;
+
+		case CLOWNMDEMU_CDDA_PLAY_ALL:
+			playback_setting = CDREADER_PLAYBACK_ALL;
+			break;
+
+		case CLOWNMDEMU_CDDA_PLAY_ONCE:
+			playback_setting = CDREADER_PLAYBACK_ONCE;
+			break;
+
+		case CLOWNMDEMU_CDDA_PLAY_REPEAT:
+			playback_setting = CDREADER_PLAYBACK_REPEAT;
+			break;
+	}
+
+	return CDReader_PlayAudio(&cd_reader, track_index, playback_setting);
+}
+
+static size_t CDAudioReadCallback(void* const user_data, cc_s16l* const sample_buffer, const size_t total_frames)
+{
+	(void)user_data;
+
+	return CDReader_ReadAudio(&cd_reader, sample_buffer, total_frames);
 }
 
 CC_ATTRIBUTE_PRINTF(2, 3) static void FallbackErrorLogCallback(const enum retro_log_level level, const char* const format, ...)
@@ -458,6 +498,8 @@ void retro_init(void)
 	clownmdemu_callbacks.cdda_audio_to_be_generated = CDDAAudioToBeGeneratedCallback;
 	clownmdemu_callbacks.cd_seeked = CDSeekCallback;
 	clownmdemu_callbacks.cd_sector_read = CDSectorReadCallback;
+	clownmdemu_callbacks.cd_track_seeked = CDSeekTrackCallback;
+	clownmdemu_callbacks.cd_audio_read = CDAudioReadCallback;
 
 	UpdateOptions(cc_true);
 
@@ -469,10 +511,13 @@ void retro_init(void)
 	/* Initialise the mixer. */
 	Mixer_Constant_Initialise(&mixer_constant);
 	Mixer_State_Initialise(&mixer_state, lowpass_filter_enabled ? SAMPLE_RATE_WITH_LOWPASS : SAMPLE_RATE_NO_LOWPASS, pal_mode_enabled, cc_false);
+
+	CDReader_Initialise(&cd_reader);
 }
 
 void retro_deinit(void)
 {
+	CDReader_Deinitialise(&cd_reader);
 	Mixer_State_Deinitialise(&mixer_state);
 }
 
@@ -685,53 +730,89 @@ void retro_run(void)
 
 bool retro_load_game(const struct retro_game_info* const info)
 {
+	bool success = false;
+	bool cd_boot = false;
+
 	rom = local_rom_buffer = NULL;
 
 	/* Initialise the ROM. */
 	if (info->data != NULL)
 	{
+		/* TODO: Check if this is a Mega CD file! */
 		rom = (const unsigned char*)info->data;
 		rom_size = info->size;
+
+		success = true;
 	}
 	else
 	{
-		FILE* const file = fopen(info->path, "rb");
+		CDReader_Sector first_sector;
+		static const char disc_identifier[] = {'S', 'E', 'G', 'A', 'D', 'I', 'S', 'C', 'S', 'Y', 'S', 'T', 'E', 'M'};
 
-		if (file != NULL)
+		/* TODO: VFS callbacks. */
+		CDReader_Open(&cd_reader, NULL, info->path, NULL);
+
+		CDReader_ReadSectorAt(&cd_reader, &first_sector, 0);
+
+		cd_boot = memcmp(first_sector, disc_identifier, sizeof(disc_identifier)) == 0;
+
+		if (!cd_boot)
+			CDReader_Close(&cd_reader);
+
+		if (cd_boot)
 		{
-			if (fseek(file, 0, SEEK_END) == 0)
+			/* Mega CD game. */
+			if (!CDReader_SeekToSector(&cd_reader, 0))
+				CDReader_Close(&cd_reader);
+			else
+				success = true;
+		}
+		else
+		{
+			/* Mega Drive game. */
+			FILE* const file = fopen(info->path, "rb");
+
+			if (file != NULL)
 			{
-				const long position = ftell(file);
-
-				if (position >= 0)
+				if (fseek(file, 0, SEEK_END) == 0)
 				{
-					const size_t file_size = (size_t)position;
-					unsigned char *file_buffer = (unsigned char*)malloc(file_size);
+					const long position = ftell(file);
 
-					if (file_buffer != NULL)
+					if (position >= 0)
 					{
-						rewind(file);
+						const size_t file_size = (size_t)position;
+						unsigned char *file_buffer = (unsigned char*)malloc(file_size);
 
-						if (fread(file_buffer, 1, file_size, file) == file_size)
+						if (file_buffer != NULL)
 						{
-							rom = local_rom_buffer = file_buffer;
-							rom_size = file_size;
-							file_buffer = NULL;
-						}
+							rewind(file);
 
-						free(file_buffer);
+							if (fread(file_buffer, 1, file_size, file) == file_size)
+							{
+								rom = local_rom_buffer = file_buffer;
+								rom_size = file_size;
+								file_buffer = NULL;
+
+								success = true;
+							}
+
+							free(file_buffer);
+						}
 					}
 				}
-			}
 
-			fclose(file);
+				fclose(file);
+			}
 		}
 	}
 
-	/* Boot the emulated Mega Drive. */
-	ClownMDEmu_Reset(&clownmdemu, cc_false); /* TODO: CD support. */
+	if (success)
+	{
+		/* Boot the emulated Mega Drive. */
+		ClownMDEmu_Reset(&clownmdemu, cd_boot);
+	}
 
-	return rom != NULL;
+	return success;
 }
 
 void retro_unload_game(void)
@@ -754,24 +835,36 @@ bool retro_load_game_special(const unsigned int type, const struct retro_game_in
 	return false;
 }
 
+typedef struct SerialisedState
+{
+	ClownMDEmu_State clownmdemu;
+	CDReader_StateBackup cd_reader;
+} SerialisedState;
+
 size_t retro_serialize_size(void)
 {
-	return sizeof(clownmdemu_state);
+	return sizeof(SerialisedState);
 }
 
 bool retro_serialize(void* const data, const size_t size)
 {
+	SerialisedState* const serialised_state = (SerialisedState*)data;
+
 	(void)size;
 
-	memcpy(data, &clownmdemu_state, sizeof(clownmdemu_state));
+	serialised_state->clownmdemu = clownmdemu_state;
+	CDReader_GetStateBackup(&cd_reader, &serialised_state->cd_reader);
 	return true;
 }
 
 bool retro_unserialize(const void* const data, const size_t size)
 {
+	const SerialisedState* const serialised_state = (SerialisedState*)data;
+
 	(void)size;
 
-	memcpy(&clownmdemu_state, data, sizeof(clownmdemu_state));
+	clownmdemu_state = serialised_state->clownmdemu;
+	CDReader_SetStateBackup(&cd_reader, &serialised_state->cd_reader);
 	return true;
 }
 
