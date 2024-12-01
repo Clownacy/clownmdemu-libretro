@@ -642,6 +642,43 @@ static void LoadFileIOCallbacks(void)
 	}
 }
 
+static bool LoadFileToBuffer(const char* const path, unsigned char** const output_file_buffer, size_t* const output_file_size)
+{
+	bool success = false;
+	struct retro_vfs_file_handle* const file = File_Open(path, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
+
+	if (file != NULL)
+	{
+		const int64_t file_size = File_GetSize(file);
+
+		if (file_size >= 0)
+		{
+			unsigned char *file_buffer = (unsigned char*)malloc((size_t)file_size);
+
+			if (file_buffer != NULL)
+			{
+				if (File_Seek(file, 0, RETRO_VFS_SEEK_POSITION_START) == 0)
+				{
+					if (File_Read(file, file_buffer, file_size) == file_size)
+					{
+						*output_file_buffer = file_buffer;
+						*output_file_size = file_size;
+						file_buffer = NULL;
+
+						success = true;
+					}
+				}
+
+				free(file_buffer);
+			}
+		}
+
+		File_Close(file);
+	}
+
+	return success;
+}
+
 /************************/
 /* ClownCD IO Callbacks */
 /************************/
@@ -1044,35 +1081,11 @@ bool retro_load_game(const struct retro_game_info* const info)
 		else
 		{
 			/* Mega Drive game. */
-			struct retro_vfs_file_handle* const file = File_Open(info->path, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
-
-			if (file != NULL)
+			if (LoadFileToBuffer(info->path, &local_rom_buffer, &rom_size))
 			{
-				const int64_t file_size = File_GetSize(file);
+				rom = local_rom_buffer;
 
-				if (file_size >= 0)
-				{
-					unsigned char *file_buffer = (unsigned char*)malloc((size_t)file_size);
-
-					if (file_buffer != NULL)
-					{
-						if (File_Seek(file, 0, RETRO_VFS_SEEK_POSITION_START) == 0)
-						{
-							if (File_Read(file, file_buffer, file_size) == file_size)
-							{
-								rom = local_rom_buffer = file_buffer;
-								rom_size = file_size;
-								file_buffer = NULL;
-
-								success = true;
-							}
-						}
-
-						free(file_buffer);
-					}
-				}
-
-				File_Close(file);
+				success = true;
 			}
 		}
 	}
