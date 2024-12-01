@@ -1067,9 +1067,6 @@ bool retro_load_game(const struct retro_game_info* const info)
 
 		cd_boot = memcmp(first_sector, disc_identifier, sizeof(disc_identifier)) == 0;
 
-		if (!cd_boot)
-			CDReader_Close(&cd_reader);
-
 		if (cd_boot)
 		{
 			/* Mega CD game. */
@@ -1081,6 +1078,8 @@ bool retro_load_game(const struct retro_game_info* const info)
 		else
 		{
 			/* Mega Drive game. */
+			CDReader_Close(&cd_reader);
+
 			if (LoadFileToBuffer(info->path, &local_rom_buffer, &rom_size))
 			{
 				rom = local_rom_buffer;
