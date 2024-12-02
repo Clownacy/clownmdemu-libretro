@@ -1058,14 +1058,9 @@ bool retro_load_game(const struct retro_game_info* const info)
 	}
 	else
 	{
-		CDReader_Sector first_sector;
-		static const char disc_identifier[] = {'S', 'E', 'G', 'A', 'D', 'I', 'S', 'C', 'S', 'Y', 'S', 'T', 'E', 'M'};
-
 		CDReader_Open(&cd_reader, NULL, info->path, &clowncd_callbacks);
 
-		CDReader_ReadSectorAt(&cd_reader, &first_sector, 0);
-
-		cd_boot = memcmp(first_sector, disc_identifier, sizeof(disc_identifier)) == 0;
+		cd_boot = CDReader_IsMegaCDGame(&cd_reader);
 
 		if (cd_boot)
 		{
