@@ -443,7 +443,7 @@ static cc_bool DoOptionBoolean(const char* const key, const char* const true_val
 static void UpdateOptions(const cc_bool only_update_flags)
 {
 	const cc_bool lowpass_filter_changed = lowpass_filter_enabled != DoOptionBoolean("clownmdemu_lowpass_filter", "enabled");
-	const cc_bool pal_mode_changed = pal_mode_enabled != DoOptionBoolean("clownmdemu_tv_standard", "pal");
+	const cc_bool pal_mode_changed       = pal_mode_enabled       != DoOptionBoolean("clownmdemu_tv_standard", "pal");
 
 	lowpass_filter_enabled ^= lowpass_filter_changed;
 	pal_mode_enabled ^= pal_mode_changed;
@@ -462,32 +462,32 @@ static void UpdateOptions(const cc_bool only_update_flags)
 
 	tall_interlace_mode_2 = DoOptionBoolean("clownmdemu_tall_interlace_mode_2", "enabled");
 
-	clownmdemu_configuration.general.region = DoOptionBoolean("clownmdemu_overseas_region", "elsewhere") ? CLOWNMDEMU_REGION_OVERSEAS : CLOWNMDEMU_REGION_DOMESTIC;
-	clownmdemu_configuration.general.tv_standard = pal_mode_enabled ? CLOWNMDEMU_TV_STANDARD_PAL : CLOWNMDEMU_TV_STANDARD_NTSC;
-	clownmdemu_configuration.vdp.sprites_disabled = DoOptionBoolean("clownmdemu_disable_sprite_plane", "enabled");
-	clownmdemu_configuration.vdp.window_disabled = DoOptionBoolean("clownmdemu_disable_window_plane", "enabled");
-	clownmdemu_configuration.vdp.planes_disabled[0] = DoOptionBoolean("clownmdemu_disable_plane_a", "enabled");
-	clownmdemu_configuration.vdp.planes_disabled[1] = DoOptionBoolean("clownmdemu_disable_plane_b", "enabled");
-	clownmdemu_configuration.fm.fm_channels_disabled[0] = DoOptionBoolean("clownmdemu_disable_fm1", "enabled");
-	clownmdemu_configuration.fm.fm_channels_disabled[1] = DoOptionBoolean("clownmdemu_disable_fm2", "enabled");
-	clownmdemu_configuration.fm.fm_channels_disabled[2] = DoOptionBoolean("clownmdemu_disable_fm3", "enabled");
-	clownmdemu_configuration.fm.fm_channels_disabled[3] = DoOptionBoolean("clownmdemu_disable_fm4", "enabled");
-	clownmdemu_configuration.fm.fm_channels_disabled[4] = DoOptionBoolean("clownmdemu_disable_fm5", "enabled");
-	clownmdemu_configuration.fm.fm_channels_disabled[5] = DoOptionBoolean("clownmdemu_disable_fm6", "enabled");
-	clownmdemu_configuration.fm.dac_channel_disabled = DoOptionBoolean("clownmdemu_disable_dac", "enabled");
-	clownmdemu_configuration.fm.ladder_effect_disabled = !DoOptionBoolean("clownmdemu_ladder_effect", "enabled");
-	clownmdemu_configuration.psg.tone_disabled[0] = DoOptionBoolean("clownmdemu_disable_psg1", "enabled");
-	clownmdemu_configuration.psg.tone_disabled[1] = DoOptionBoolean("clownmdemu_disable_psg2", "enabled");
-	clownmdemu_configuration.psg.tone_disabled[2] = DoOptionBoolean("clownmdemu_disable_psg3", "enabled");
-	clownmdemu_configuration.psg.noise_disabled = DoOptionBoolean("clownmdemu_disable_psg_noise", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[0] = DoOptionBoolean("clownmdemu_disable_pcm1", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[1] = DoOptionBoolean("clownmdemu_disable_pcm2", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[2] = DoOptionBoolean("clownmdemu_disable_pcm3", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[3] = DoOptionBoolean("clownmdemu_disable_pcm4", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[4] = DoOptionBoolean("clownmdemu_disable_pcm5", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[5] = DoOptionBoolean("clownmdemu_disable_pcm6", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[6] = DoOptionBoolean("clownmdemu_disable_pcm7", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[7] = DoOptionBoolean("clownmdemu_disable_pcm8", "enabled");
+	clownmdemu_configuration.general.region             =  DoOptionBoolean("clownmdemu_overseas_region", "elsewhere") ? CLOWNMDEMU_REGION_OVERSEAS : CLOWNMDEMU_REGION_DOMESTIC;
+	clownmdemu_configuration.general.tv_standard        =  pal_mode_enabled ? CLOWNMDEMU_TV_STANDARD_PAL : CLOWNMDEMU_TV_STANDARD_NTSC;
+	clownmdemu_configuration.vdp.sprites_disabled       =  DoOptionBoolean("clownmdemu_disable_sprite_plane", "enabled");
+	clownmdemu_configuration.vdp.window_disabled        =  DoOptionBoolean("clownmdemu_disable_window_plane", "enabled");
+	clownmdemu_configuration.vdp.planes_disabled[0]     =  DoOptionBoolean("clownmdemu_disable_plane_a", "enabled");
+	clownmdemu_configuration.vdp.planes_disabled[1]     =  DoOptionBoolean("clownmdemu_disable_plane_b", "enabled");
+	clownmdemu_configuration.fm.fm_channels_disabled[0] =  DoOptionBoolean("clownmdemu_disable_fm1", "enabled");
+	clownmdemu_configuration.fm.fm_channels_disabled[1] =  DoOptionBoolean("clownmdemu_disable_fm2", "enabled");
+	clownmdemu_configuration.fm.fm_channels_disabled[2] =  DoOptionBoolean("clownmdemu_disable_fm3", "enabled");
+	clownmdemu_configuration.fm.fm_channels_disabled[3] =  DoOptionBoolean("clownmdemu_disable_fm4", "enabled");
+	clownmdemu_configuration.fm.fm_channels_disabled[4] =  DoOptionBoolean("clownmdemu_disable_fm5", "enabled");
+	clownmdemu_configuration.fm.fm_channels_disabled[5] =  DoOptionBoolean("clownmdemu_disable_fm6", "enabled");
+	clownmdemu_configuration.fm.dac_channel_disabled    =  DoOptionBoolean("clownmdemu_disable_dac", "enabled");
+	clownmdemu_configuration.fm.ladder_effect_disabled  = !DoOptionBoolean("clownmdemu_ladder_effect", "enabled");
+	clownmdemu_configuration.psg.tone_disabled[0]       =  DoOptionBoolean("clownmdemu_disable_psg1", "enabled");
+	clownmdemu_configuration.psg.tone_disabled[1]       =  DoOptionBoolean("clownmdemu_disable_psg2", "enabled");
+	clownmdemu_configuration.psg.tone_disabled[2]       =  DoOptionBoolean("clownmdemu_disable_psg3", "enabled");
+	clownmdemu_configuration.psg.noise_disabled         =  DoOptionBoolean("clownmdemu_disable_psg_noise", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[0]   =  DoOptionBoolean("clownmdemu_disable_pcm1", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[1]   =  DoOptionBoolean("clownmdemu_disable_pcm2", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[2]   =  DoOptionBoolean("clownmdemu_disable_pcm3", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[3]   =  DoOptionBoolean("clownmdemu_disable_pcm4", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[4]   =  DoOptionBoolean("clownmdemu_disable_pcm5", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[5]   =  DoOptionBoolean("clownmdemu_disable_pcm6", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[6]   =  DoOptionBoolean("clownmdemu_disable_pcm7", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[7]   =  DoOptionBoolean("clownmdemu_disable_pcm8", "enabled");
 }
 
 /***********/
@@ -622,23 +622,23 @@ static void LoadFileIOCallbacks(void)
 
 	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &info))
 	{
-		File_Open = info.iface->open;
-		File_Close = info.iface->close;
+		File_Open    = info.iface->open;
+		File_Close   = info.iface->close;
 		File_GetSize = info.iface->size;
-		File_Tell = info.iface->tell;
-		File_Seek = info.iface->seek;
-		File_Read = info.iface->read;
-		File_Write = info.iface->write;
+		File_Tell    = info.iface->tell;
+		File_Seek    = info.iface->seek;
+		File_Read    = info.iface->read;
+		File_Write   = info.iface->write;
 	}
 	else
 	{
-		File_Open = File_OpenDefault;
-		File_Close = File_CloseDefault;
+		File_Open    = File_OpenDefault;
+		File_Close   = File_CloseDefault;
 		File_GetSize = File_GetSizeDefault;
-		File_Tell = File_TellDefault;
-		File_Seek = File_SeekDefault;
-		File_Read = File_ReadDefault;
-		File_Write = File_WriteDefault;
+		File_Tell    = File_TellDefault;
+		File_Seek    = File_SeekDefault;
+		File_Read    = File_ReadDefault;
+		File_Write   = File_WriteDefault;
 	}
 }
 
@@ -799,19 +799,19 @@ void retro_init(void)
 
 	/* Initialise clownmdemu. */
 	clownmdemu_callbacks.user_data = NULL;
-	clownmdemu_callbacks.cartridge_read = CartridgeReadCallback;
+	clownmdemu_callbacks.cartridge_read    = CartridgeReadCallback;
 	clownmdemu_callbacks.cartridge_written = CartridgeWriteCallback;
-	clownmdemu_callbacks.colour_updated = ColourUpdatedCallback_0RGB1555;
+	clownmdemu_callbacks.colour_updated    = ColourUpdatedCallback_0RGB1555;
 	clownmdemu_callbacks.scanline_rendered = ScanlineRenderedCallback;
-	clownmdemu_callbacks.input_requested = InputRequestedCallback;
-	clownmdemu_callbacks.fm_audio_to_be_generated = FMAudioToBeGeneratedCallback;
-	clownmdemu_callbacks.psg_audio_to_be_generated = PSGAudioToBeGeneratedCallback;
-	clownmdemu_callbacks.pcm_audio_to_be_generated = PCMAudioToBeGeneratedCallback;
+	clownmdemu_callbacks.input_requested   = InputRequestedCallback;
+	clownmdemu_callbacks.fm_audio_to_be_generated   = FMAudioToBeGeneratedCallback;
+	clownmdemu_callbacks.psg_audio_to_be_generated  = PSGAudioToBeGeneratedCallback;
+	clownmdemu_callbacks.pcm_audio_to_be_generated  = PCMAudioToBeGeneratedCallback;
 	clownmdemu_callbacks.cdda_audio_to_be_generated = CDDAAudioToBeGeneratedCallback;
-	clownmdemu_callbacks.cd_seeked = CDSeekCallback;
-	clownmdemu_callbacks.cd_sector_read = CDSectorReadCallback;
+	clownmdemu_callbacks.cd_seeked       = CDSeekCallback;
+	clownmdemu_callbacks.cd_sector_read  = CDSectorReadCallback;
 	clownmdemu_callbacks.cd_track_seeked = CDSeekTrackCallback;
-	clownmdemu_callbacks.cd_audio_read = CDAudioReadCallback;
+	clownmdemu_callbacks.cd_audio_read   = CDAudioReadCallback;
 
 	UpdateOptions(cc_true);
 
