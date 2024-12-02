@@ -1148,14 +1148,34 @@ bool retro_unserialize(const void* const data, const size_t size)
 
 void* retro_get_memory_data(const unsigned int id)
 {
-	(void)id;
+	switch (id)
+	{
+		case RETRO_MEMORY_SAVE_RAM:
+			return clownmdemu_state.external_ram.buffer;
+
+		case RETRO_MEMORY_SYSTEM_RAM:
+			return clownmdemu_state.m68k.ram;
+
+		case RETRO_MEMORY_VIDEO_RAM:
+			return clownmdemu_state.vdp.vram;
+	}
 
 	return NULL;
 }
 
 size_t retro_get_memory_size(const unsigned int id)
 {
-	(void)id;
+	switch (id)
+	{
+		case RETRO_MEMORY_SAVE_RAM:
+			return sizeof(clownmdemu_state.external_ram.buffer);
+
+		case RETRO_MEMORY_SYSTEM_RAM:
+			return sizeof(clownmdemu_state.m68k.ram);
+
+		case RETRO_MEMORY_VIDEO_RAM:
+			return sizeof(clownmdemu_state.vdp.vram);
+	}
 
 	return 0;
 }
