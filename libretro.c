@@ -852,7 +852,7 @@ void retro_get_system_info(struct retro_system_info* const info)
 	info->library_name     = "clownmdemu";
 	info->library_version  = "v0.9";
 	info->need_fullpath    = true;
-	info->valid_extensions = "bin|md|gen";
+	info->valid_extensions = "bin|md|gen|cue|iso";
 	info->block_extract    = false;
 }
 
