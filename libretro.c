@@ -973,6 +973,20 @@ void retro_set_environment(const retro_environment_t environment_callback)
 
 	libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, (void*)&desc);
 	}
+
+	/* Allow Mega Drive games to be soft-patched by the frontend. */
+	{
+	static const struct retro_system_content_info_override overrides[] = {
+		{
+			"bin|md|gen",
+			false,
+			true
+		},
+		{NULL, false, false}
+	};
+
+	libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_CONTENT_INFO_OVERRIDE, (void*)&overrides);
+	}
 }
 
 void retro_set_audio_sample(const retro_audio_sample_t audio_callback)
