@@ -2,9 +2,8 @@
 
 This is ClownMDEmu, a Sega Mega Drive (a.k.a. Sega Genesis) emulator.
 
-It is currently in the very early stages of development: it can run some games,
-but many standard features of the Mega Drive are unemulated (see
-`clownmdemu-frontend-common/clownmdemu/TODO.md` for more information).
+Some standard features of the Mega Drive are currently unemulated (see
+`common/core/TODO.md` for more information).
 
 This repository contains a frontend that exposes ClownMDEmu as a libretro core.
 It is written in C89 and should provide all of the same features as the
