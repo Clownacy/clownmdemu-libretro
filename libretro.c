@@ -11,7 +11,7 @@
 #include "libretro_core_options.h"
 
 #include "common/cd-reader.h"
-#include "common/clownmdemu/clownmdemu.h"
+#include "common/core/clownmdemu.h"
 
 #define MIXER_IMPLEMENTATION
 #define MIXER_FORMAT int16_t
