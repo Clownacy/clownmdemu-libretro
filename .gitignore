@@ -2,7 +2,7 @@
 /objects
 
 # Makefile compiled output.
-/clownmdemu_libretro.dll
+/clownmdemu_libretro.*
 
 # Typical CMake build directory.
 /build
