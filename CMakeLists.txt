@@ -31,4 +31,4 @@ target_link_libraries(clownmdemu_libretro clowncd)
 
 # Link clownmdemu core.
 add_subdirectory("common/core" EXCLUDE_FROM_ALL)
-target_link_libraries(clownmdemu_libretro clownmdemu)
+target_link_libraries(clownmdemu_libretro clownmdemu-core)
