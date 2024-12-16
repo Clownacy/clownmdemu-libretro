@@ -414,6 +414,13 @@ CC_ATTRIBUTE_PRINTF(2, 3) static void FallbackErrorLogCallback(const enum retro_
 	va_end(args);
 }
 
+static void ClownCDLog(void* const user_data, const char* const message)
+{
+	(void)user_data;
+
+	libretro_callbacks.log(RETRO_LOG_WARN, "ClownCD: %s", message);
+}
+
 static void ClownMDEmuLog(void* const user_data, const char* const format, va_list arg)
 {
 	/* libretro lacks an error log callback that takes a va_list,
@@ -815,6 +822,7 @@ void retro_init(void)
 
 	UpdateOptions(cc_true);
 
+	ClownCD_SetErrorCallback(ClownCDLog, NULL);
 	ClownMDEmu_SetLogCallback(ClownMDEmuLog, NULL);
 
 	clownmdemu_constant = ClownMDEmu_Constant_Initialise();
