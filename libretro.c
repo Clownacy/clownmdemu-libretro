@@ -334,14 +334,11 @@ static void CDSeekCallback(void* const user_data, const cc_u32f sector_index)
 	CDReader_SeekToSector(&cd_reader, sector_index);
 }
 
-static const cc_u8l* CDSectorReadCallback(void* const user_data)
+static void CDSectorReadCallback(void* const user_data, cc_u16l* const buffer)
 {
-	static CDReader_Sector sector;
-
 	(void)user_data;
 
-	CDReader_ReadSector(&cd_reader, &sector);
-	return sector;
+	CDReader_ReadSector(&cd_reader, buffer);
 }
 
 static cc_bool CDSeekTrackCallback(void* const user_data, const cc_u16f track_index, const ClownMDEmu_CDDAMode mode)
@@ -825,7 +822,7 @@ void retro_init(void)
 	ClownCD_SetErrorCallback(ClownCDLog, NULL);
 	ClownMDEmu_SetLogCallback(ClownMDEmuLog, NULL);
 
-	clownmdemu_constant = ClownMDEmu_Constant_Initialise();
+	ClownMDEmu_Constant_Initialise(&clownmdemu_constant);
 	ClownMDEmu_State_Initialise(&clownmdemu_state);
 
 	/* Initialise the mixer. */
