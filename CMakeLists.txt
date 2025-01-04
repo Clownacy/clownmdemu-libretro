@@ -25,10 +25,6 @@ set_target_properties(clownmdemu_libretro PROPERTIES PREFIX "")
 # Add a definition from the Makefile.
 target_compile_definitions(clownmdemu_libretro PRIVATE __LIBRETRO__)
 
-# Link clowncd.
-add_subdirectory("common/clowncd" EXCLUDE_FROM_ALL)
-target_link_libraries(clownmdemu_libretro clowncd)
-
-# Link clownmdemu core.
-add_subdirectory("common/core" EXCLUDE_FROM_ALL)
-target_link_libraries(clownmdemu_libretro clownmdemu-core)
+# Link clownmdemu-frontend-common.
+add_subdirectory("common" EXCLUDE_FROM_ALL)
+target_link_libraries(clownmdemu_libretro clownmdemu-frontend-common)
