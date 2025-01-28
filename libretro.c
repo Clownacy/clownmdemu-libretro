@@ -66,6 +66,8 @@ static cc_bool pal_mode_enabled;
 static cc_bool tall_interlace_mode_2;
 static cc_bool lowpass_filter_enabled;
 
+static struct retro_vfs_file_handle *buram_file_handle;
+
 static struct
 {
 	retro_environment_t        environment;
@@ -76,6 +78,203 @@ static struct
 	retro_input_state_t        input_state;
 	CC_ATTRIBUTE_PRINTF(2, 3) retro_log_printf_t log;
 } libretro_callbacks;
+
+/***********/
+/* File IO */
+/***********/
+
+static retro_vfs_open_t File_Open;
+static retro_vfs_close_t File_Close;
+static retro_vfs_size_t File_GetSize;
+static retro_vfs_tell_t File_Tell;
+static retro_vfs_seek_t File_Seek;
+static retro_vfs_read_t File_Read;
+static retro_vfs_write_t File_Write;
+static retro_vfs_remove_t File_Remove;
+
+static struct retro_vfs_file_handle* RETRO_CALLCONV File_OpenDefault(const char* const path, const unsigned int mode, const unsigned int hints)
+{
+	const char* mode_standard;
+
+	(void)hints;
+
+	switch (mode)
+	{
+		case RETRO_VFS_FILE_ACCESS_READ:
+		case RETRO_VFS_FILE_ACCESS_READ | RETRO_VFS_FILE_ACCESS_UPDATE_EXISTING:
+			mode_standard = "rb";
+			break;
+
+		case RETRO_VFS_FILE_ACCESS_WRITE:
+			mode_standard = "wb";
+			break;
+
+		case RETRO_VFS_FILE_ACCESS_WRITE | RETRO_VFS_FILE_ACCESS_UPDATE_EXISTING:
+		case RETRO_VFS_FILE_ACCESS_READ | RETRO_VFS_FILE_ACCESS_WRITE | RETRO_VFS_FILE_ACCESS_UPDATE_EXISTING:
+			mode_standard = "r+b";
+			break;
+
+		case RETRO_VFS_FILE_ACCESS_READ | RETRO_VFS_FILE_ACCESS_WRITE:
+			mode_standard = "w+b";
+			break;
+
+		default:
+			return NULL;
+	}
+
+	return (struct retro_vfs_file_handle*)fopen(path, mode_standard);
+}
+
+static int RETRO_CALLCONV File_CloseDefault(struct retro_vfs_file_handle* const stream)
+{
+	if (stream == NULL)
+		return -1;
+
+	return fclose((FILE*)stream) == 0 ? 0 : -1;
+}
+
+
+static int64_t RETRO_CALLCONV File_GetSizeDefault(struct retro_vfs_file_handle* const stream)
+{
+	FILE* const file = (FILE*)stream;
+	fpos_t position;
+	int64_t result = -1;
+
+	if (fgetpos(file, &position) == 0)
+	{
+		if (fseek(file, 0, SEEK_END) == 0)
+			result = ftell(file);
+
+		if (fsetpos(file, &position) != 0)
+			result = -1;
+	}
+
+	return result;
+}
+
+static int64_t RETRO_CALLCONV File_TellDefault(struct retro_vfs_file_handle* const stream)
+{
+	return ftell((FILE*)stream);
+}
+
+static int64_t RETRO_CALLCONV File_SeekDefault(struct retro_vfs_file_handle* const stream, const int64_t offset, const int seek_position)
+{
+	int whence;
+
+	if (offset < LONG_MIN || offset > LONG_MAX)
+		return -1;
+
+	switch (seek_position)
+	{
+		case RETRO_VFS_SEEK_POSITION_START:
+			whence = SEEK_SET;
+			break;
+
+		case RETRO_VFS_SEEK_POSITION_CURRENT:
+			whence = SEEK_CUR;
+			break;
+
+		case RETRO_VFS_SEEK_POSITION_END:
+			whence = SEEK_END;
+			break;
+
+		default:
+			return -1;
+	}
+
+	if (fseek((FILE*)stream, offset, whence) != 0)
+		return -1;
+
+	return File_TellDefault(stream);
+}
+
+static int64_t RETRO_CALLCONV File_ReadDefault(struct retro_vfs_file_handle* const stream, void* const s, const uint64_t len)
+{
+	if (len > (size_t)-1)
+		return -1;
+
+	return fread(s, 1, len, (FILE*)stream);
+}
+
+static int64_t RETRO_CALLCONV File_WriteDefault(struct retro_vfs_file_handle* const stream, const void* const s, const uint64_t len)
+{
+	if (len > (size_t)-1)
+		return -1;
+
+	return fwrite(s, 1, len, (FILE*)stream);
+}
+
+static int RETRO_CALLCONV File_RemoveDefault(const char* const path)
+{
+	return remove(path);
+}
+
+static void LoadFileIOCallbacks(void)
+{
+	struct retro_vfs_interface_info info;
+
+	info.required_interface_version = 1;
+
+	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &info))
+	{
+		File_Open    = info.iface->open;
+		File_Close   = info.iface->close;
+		File_GetSize = info.iface->size;
+		File_Tell    = info.iface->tell;
+		File_Seek    = info.iface->seek;
+		File_Read    = info.iface->read;
+		File_Write   = info.iface->write;
+		File_Remove  = info.iface->remove;
+	}
+	else
+	{
+		File_Open    = File_OpenDefault;
+		File_Close   = File_CloseDefault;
+		File_GetSize = File_GetSizeDefault;
+		File_Tell    = File_TellDefault;
+		File_Seek    = File_SeekDefault;
+		File_Read    = File_ReadDefault;
+		File_Write   = File_WriteDefault;
+		File_Remove  = File_RemoveDefault;
+	}
+}
+
+static bool LoadFileToBuffer(const char* const path, unsigned char** const output_file_buffer, size_t* const output_file_size)
+{
+	bool success = false;
+	struct retro_vfs_file_handle* const file = File_Open(path, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
+
+	if (file != NULL)
+	{
+		const int64_t file_size = File_GetSize(file);
+
+		if (file_size >= 0)
+		{
+			unsigned char *file_buffer = (unsigned char*)malloc((size_t)file_size);
+
+			if (file_buffer != NULL)
+			{
+				if (File_Seek(file, 0, RETRO_VFS_SEEK_POSITION_START) == 0)
+				{
+					if (File_Read(file, file_buffer, file_size) == file_size)
+					{
+						*output_file_buffer = file_buffer;
+						*output_file_size = file_size;
+						file_buffer = NULL;
+
+						success = true;
+					}
+				}
+
+				free(file_buffer);
+			}
+		}
+
+		File_Close(file);
+	}
+
+	return success;
+}
 
 /************************/
 /* ClownMDEmu Callbacks */
@@ -376,6 +575,139 @@ static size_t CDAudioReadCallback(void* const user_data, cc_s16l* const sample_b
 	return CDReader_ReadAudio(&cd_reader, sample_buffer, total_frames);
 }
 
+static const char* GetBuRAMDirectory(void)
+{
+	const char *path;
+
+	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &path))
+		return path;
+
+	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &path))
+		return path;
+
+	return "";
+}
+
+static char* GetBuRAMPath(const char* const filename)
+{
+	const char* const directory = GetBuRAMDirectory();
+	const size_t directory_length = strlen(directory);
+	const size_t filename_length = strlen(filename);
+	char* const buffer = (char*)malloc(directory_length + 1 + filename_length + 1);
+
+	if (buffer != NULL)
+	{
+		memcpy(&buffer[0], directory, directory_length);
+		buffer[directory_length] = '/';
+		memcpy(&buffer[directory_length + 1], filename, filename_length);
+		buffer[directory_length + 1 + filename_length] = '\0';
+	}
+
+	return buffer;
+}
+
+static cc_bool SaveFileOpened(void* const user_data, const char* const filename, const bool read_or_write)
+{
+	cc_bool success = cc_false;
+
+	char* const path = GetBuRAMPath(filename);
+
+	(void)user_data;
+
+	if (path != NULL)
+	{
+		buram_file_handle = File_Open(path, read_or_write ? RETRO_VFS_FILE_ACCESS_WRITE : RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
+		success = buram_file_handle != NULL;
+
+		free(path);
+	}
+
+	return success;
+}
+
+static cc_bool SaveFileOpenedForReadingCallback(void* const user_data, const char* const filename)
+{
+	return SaveFileOpened(user_data, filename, false);
+}
+
+static cc_s16f SaveFileReadCallback(void* const user_data)
+{
+	uint8_t byte;
+
+	(void)user_data;
+
+	if (File_Read(buram_file_handle, &byte, 1) == 0)
+		return -1;
+
+	return byte;
+}
+
+static cc_bool SaveFileOpenedForWriting(void* const user_data, const char* const filename)
+{
+	return SaveFileOpened(user_data, filename, true);
+}
+
+static void SaveFileWritten(void* const user_data, const cc_u8f byte)
+{
+	const uint8_t value = byte;
+
+	(void)user_data;
+
+	File_Write(buram_file_handle, &value, 1);
+}
+
+static void SaveFileClosed(void* const user_data)
+{
+	(void)user_data;
+
+	File_Close(buram_file_handle);
+}
+
+static cc_bool SaveFileRemoved(void* const user_data, const char* const filename)
+{
+	cc_bool success = cc_false;
+
+	char* const path = GetBuRAMPath(filename);
+
+	(void)user_data;
+
+	if (path != NULL)
+	{
+		success = File_Remove(path) == 0;
+
+		free(path);
+	}
+
+	return success;
+}
+
+static cc_bool SaveFileSizeObtained(void* const user_data, const char* const filename, size_t* const size)
+{
+	cc_bool success = cc_false;
+
+	char* const path = GetBuRAMPath(filename);
+
+	(void)user_data;
+
+	if (path != NULL)
+	{
+		struct retro_vfs_file_handle* const file = File_Open(path, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
+
+		if (file != NULL)
+		{
+			*size = File_GetSize(file);
+			success = cc_true;
+
+			File_Close(file);
+		}
+
+		free(path);
+	}
+
+
+	return success;
+}
+
 /***********/
 /* Logging */
 /***********/
@@ -492,195 +824,6 @@ static void UpdateOptions(const cc_bool only_update_flags)
 	clownmdemu_configuration.pcm.channels_disabled[5]   =  DoOptionBoolean("clownmdemu_disable_pcm6", "enabled");
 	clownmdemu_configuration.pcm.channels_disabled[6]   =  DoOptionBoolean("clownmdemu_disable_pcm7", "enabled");
 	clownmdemu_configuration.pcm.channels_disabled[7]   =  DoOptionBoolean("clownmdemu_disable_pcm8", "enabled");
-}
-
-/***********/
-/* File IO */
-/***********/
-
-static retro_vfs_open_t File_Open;
-static retro_vfs_close_t File_Close;
-static retro_vfs_size_t File_GetSize;
-static retro_vfs_tell_t File_Tell;
-static retro_vfs_seek_t File_Seek;
-static retro_vfs_read_t File_Read;
-static retro_vfs_write_t File_Write;
-
-static struct retro_vfs_file_handle* RETRO_CALLCONV File_OpenDefault(const char* const path, const unsigned int mode, const unsigned int hints)
-{
-	const char* mode_standard;
-
-	(void)hints;
-
-	switch (mode)
-	{
-		case RETRO_VFS_FILE_ACCESS_READ:
-		case RETRO_VFS_FILE_ACCESS_READ | RETRO_VFS_FILE_ACCESS_UPDATE_EXISTING:
-			mode_standard = "rb";
-			break;
-
-		case RETRO_VFS_FILE_ACCESS_WRITE:
-			mode_standard = "wb";
-			break;
-
-		case RETRO_VFS_FILE_ACCESS_WRITE | RETRO_VFS_FILE_ACCESS_UPDATE_EXISTING:
-		case RETRO_VFS_FILE_ACCESS_READ | RETRO_VFS_FILE_ACCESS_WRITE | RETRO_VFS_FILE_ACCESS_UPDATE_EXISTING:
-			mode_standard = "r+b";
-			break;
-
-		case RETRO_VFS_FILE_ACCESS_READ | RETRO_VFS_FILE_ACCESS_WRITE:
-			mode_standard = "w+b";
-			break;
-
-		default:
-			return NULL;
-	}
-
-	return (struct retro_vfs_file_handle*)fopen(path, mode_standard);
-}
-
-static int RETRO_CALLCONV File_CloseDefault(struct retro_vfs_file_handle* const stream)
-{
-	if (stream == NULL)
-		return -1;
-
-	return fclose((FILE*)stream) == 0 ? 0 : -1;
-}
-
-
-static int64_t RETRO_CALLCONV File_GetSizeDefault(struct retro_vfs_file_handle* const stream)
-{
-	FILE* const file = (FILE*)stream;
-	fpos_t position;
-	int64_t result = -1;
-
-	if (fgetpos(file, &position) == 0)
-	{
-		if (fseek(file, 0, SEEK_END) == 0)
-			result = ftell(file);
-
-		if (fsetpos(file, &position) != 0)
-			result = -1;
-	}
-
-	return result;
-}
-
-static int64_t RETRO_CALLCONV File_TellDefault(struct retro_vfs_file_handle* const stream)
-{
-	return ftell((FILE*)stream);
-}
-
-static int64_t RETRO_CALLCONV File_SeekDefault(struct retro_vfs_file_handle* const stream, const int64_t offset, const int seek_position)
-{
-	int whence;
-
-	if (offset < LONG_MIN || offset > LONG_MAX)
-		return -1;
-
-	switch (seek_position)
-	{
-		case RETRO_VFS_SEEK_POSITION_START:
-			whence = SEEK_SET;
-			break;
-
-		case RETRO_VFS_SEEK_POSITION_CURRENT:
-			whence = SEEK_CUR;
-			break;
-
-		case RETRO_VFS_SEEK_POSITION_END:
-			whence = SEEK_END;
-			break;
-
-		default:
-			return -1;
-	}
-
-	if (fseek((FILE*)stream, offset, whence) != 0)
-		return -1;
-
-	return File_TellDefault(stream);
-}
-
-static int64_t RETRO_CALLCONV File_ReadDefault(struct retro_vfs_file_handle* const stream, void* const s, const uint64_t len)
-{
-	if (len > (size_t)-1)
-		return -1;
-
-	return fread(s, 1, len, (FILE*)stream);
-}
-
-static int64_t RETRO_CALLCONV File_WriteDefault(struct retro_vfs_file_handle* const stream, const void* const s, const uint64_t len)
-{
-	if (len > (size_t)-1)
-		return -1;
-
-	return fwrite(s, 1, len, (FILE*)stream);
-}
-
-static void LoadFileIOCallbacks(void)
-{
-	struct retro_vfs_interface_info info;
-
-	info.required_interface_version = 1;
-
-	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &info))
-	{
-		File_Open    = info.iface->open;
-		File_Close   = info.iface->close;
-		File_GetSize = info.iface->size;
-		File_Tell    = info.iface->tell;
-		File_Seek    = info.iface->seek;
-		File_Read    = info.iface->read;
-		File_Write   = info.iface->write;
-	}
-	else
-	{
-		File_Open    = File_OpenDefault;
-		File_Close   = File_CloseDefault;
-		File_GetSize = File_GetSizeDefault;
-		File_Tell    = File_TellDefault;
-		File_Seek    = File_SeekDefault;
-		File_Read    = File_ReadDefault;
-		File_Write   = File_WriteDefault;
-	}
-}
-
-static bool LoadFileToBuffer(const char* const path, unsigned char** const output_file_buffer, size_t* const output_file_size)
-{
-	bool success = false;
-	struct retro_vfs_file_handle* const file = File_Open(path, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
-
-	if (file != NULL)
-	{
-		const int64_t file_size = File_GetSize(file);
-
-		if (file_size >= 0)
-		{
-			unsigned char *file_buffer = (unsigned char*)malloc((size_t)file_size);
-
-			if (file_buffer != NULL)
-			{
-				if (File_Seek(file, 0, RETRO_VFS_SEEK_POSITION_START) == 0)
-				{
-					if (File_Read(file, file_buffer, file_size) == file_size)
-					{
-						*output_file_buffer = file_buffer;
-						*output_file_size = file_size;
-						file_buffer = NULL;
-
-						success = true;
-					}
-				}
-
-				free(file_buffer);
-			}
-		}
-
-		File_Close(file);
-	}
-
-	return success;
 }
 
 /************************/
@@ -816,6 +959,13 @@ void retro_init(void)
 	clownmdemu_callbacks.cd_sector_read  = CDSectorReadCallback;
 	clownmdemu_callbacks.cd_track_seeked = CDSeekTrackCallback;
 	clownmdemu_callbacks.cd_audio_read   = CDAudioReadCallback;
+	clownmdemu_callbacks.save_file_opened_for_reading = SaveFileOpenedForReadingCallback;
+	clownmdemu_callbacks.save_file_read               = SaveFileReadCallback;
+	clownmdemu_callbacks.save_file_opened_for_writing = SaveFileOpenedForWriting;
+	clownmdemu_callbacks.save_file_written            = SaveFileWritten;
+	clownmdemu_callbacks.save_file_closed             = SaveFileClosed;
+	clownmdemu_callbacks.save_file_removed            = SaveFileRemoved;
+	clownmdemu_callbacks.save_file_size_obtained      = SaveFileSizeObtained;
 
 	UpdateOptions(cc_true);
 
