@@ -642,12 +642,12 @@ static cc_s16f SaveFileReadCallback(void* const user_data)
 	return byte;
 }
 
-static cc_bool SaveFileOpenedForWriting(void* const user_data, const char* const filename)
+static cc_bool SaveFileOpenedForWritingCallback(void* const user_data, const char* const filename)
 {
 	return SaveFileOpened(user_data, filename, true);
 }
 
-static void SaveFileWritten(void* const user_data, const cc_u8f byte)
+static void SaveFileWrittenCallback(void* const user_data, const cc_u8f byte)
 {
 	const uint8_t value = byte;
 
@@ -656,14 +656,14 @@ static void SaveFileWritten(void* const user_data, const cc_u8f byte)
 	File_Write(buram_file_handle, &value, 1);
 }
 
-static void SaveFileClosed(void* const user_data)
+static void SaveFileClosedCallback(void* const user_data)
 {
 	(void)user_data;
 
 	File_Close(buram_file_handle);
 }
 
-static cc_bool SaveFileRemoved(void* const user_data, const char* const filename)
+static cc_bool SaveFileRemovedCallback(void* const user_data, const char* const filename)
 {
 	cc_bool success = cc_false;
 
@@ -681,7 +681,7 @@ static cc_bool SaveFileRemoved(void* const user_data, const char* const filename
 	return success;
 }
 
-static cc_bool SaveFileSizeObtained(void* const user_data, const char* const filename, size_t* const size)
+static cc_bool SaveFileSizeObtainedCallback(void* const user_data, const char* const filename, size_t* const size)
 {
 	cc_bool success = cc_false;
 
@@ -961,11 +961,11 @@ void retro_init(void)
 	clownmdemu_callbacks.cd_audio_read   = CDAudioReadCallback;
 	clownmdemu_callbacks.save_file_opened_for_reading = SaveFileOpenedForReadingCallback;
 	clownmdemu_callbacks.save_file_read               = SaveFileReadCallback;
-	clownmdemu_callbacks.save_file_opened_for_writing = SaveFileOpenedForWriting;
-	clownmdemu_callbacks.save_file_written            = SaveFileWritten;
-	clownmdemu_callbacks.save_file_closed             = SaveFileClosed;
-	clownmdemu_callbacks.save_file_removed            = SaveFileRemoved;
-	clownmdemu_callbacks.save_file_size_obtained      = SaveFileSizeObtained;
+	clownmdemu_callbacks.save_file_opened_for_writing = SaveFileOpenedForWritingCallback;
+	clownmdemu_callbacks.save_file_written            = SaveFileWrittenCallback;
+	clownmdemu_callbacks.save_file_closed             = SaveFileClosedCallback;
+	clownmdemu_callbacks.save_file_removed            = SaveFileRemovedCallback;
+	clownmdemu_callbacks.save_file_size_obtained      = SaveFileSizeObtainedCallback;
 
 	UpdateOptions(cc_true);
 
