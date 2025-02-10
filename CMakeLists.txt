@@ -19,6 +19,9 @@ set_target_properties(clownmdemu_libretro PROPERTIES
 	C_EXTENSIONS OFF
 )
 
+# Avoid linker errors on Linux.
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # Prevent the 'lib' prefix from being added, to match the behaviour of the Makefile.
 set_target_properties(clownmdemu_libretro PROPERTIES PREFIX "")
 
