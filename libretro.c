@@ -20,8 +20,7 @@
 #define FRAMEBUFFER_WIDTH 320
 #define FRAMEBUFFER_HEIGHT 480
 
-#define SAMPLE_RATE_NO_LOWPASS 48000
-#define SAMPLE_RATE_WITH_LOWPASS 22000 /* This sounds about right compared to my PAL Model 1 Mega Drive. */
+#define SAMPLE_RATE 48000
 
 /* Mixer data. */
 static Mixer_Constant mixer_constant;
@@ -64,7 +63,6 @@ static CDReader_State cd_reader;
 
 static cc_bool pal_mode_enabled;
 static cc_bool tall_interlace_mode_2;
-static cc_bool lowpass_filter_enabled;
 
 static struct retro_vfs_file_handle *buram_file_handle;
 
@@ -778,16 +776,14 @@ static cc_bool DoOptionBoolean(const char* const key, const char* const true_val
 
 static void UpdateOptions(const cc_bool only_update_flags)
 {
-	const cc_bool lowpass_filter_changed = lowpass_filter_enabled != DoOptionBoolean("clownmdemu_lowpass_filter", "enabled");
 	const cc_bool pal_mode_changed       = pal_mode_enabled       != DoOptionBoolean("clownmdemu_tv_standard", "pal");
 
-	lowpass_filter_enabled ^= lowpass_filter_changed;
 	pal_mode_enabled ^= pal_mode_changed;
 
-	if ((lowpass_filter_changed || pal_mode_changed) && !only_update_flags)
+	if (pal_mode_changed && !only_update_flags)
 	{
 		Mixer_State_Deinitialise(&mixer_state);
-		Mixer_State_Initialise(&mixer_state, lowpass_filter_enabled ? SAMPLE_RATE_WITH_LOWPASS : SAMPLE_RATE_NO_LOWPASS, pal_mode_enabled, cc_false);
+		Mixer_State_Initialise(&mixer_state, SAMPLE_RATE, pal_mode_enabled);
 
 		{
 		struct retro_system_av_info info;
@@ -798,32 +794,33 @@ static void UpdateOptions(const cc_bool only_update_flags)
 
 	tall_interlace_mode_2 = DoOptionBoolean("clownmdemu_tall_interlace_mode_2", "enabled");
 
-	clownmdemu_configuration.general.region             =  DoOptionBoolean("clownmdemu_overseas_region", "elsewhere") ? CLOWNMDEMU_REGION_OVERSEAS : CLOWNMDEMU_REGION_DOMESTIC;
-	clownmdemu_configuration.general.tv_standard        =  pal_mode_enabled ? CLOWNMDEMU_TV_STANDARD_PAL : CLOWNMDEMU_TV_STANDARD_NTSC;
-	clownmdemu_configuration.vdp.sprites_disabled       =  DoOptionBoolean("clownmdemu_disable_sprite_plane", "enabled");
-	clownmdemu_configuration.vdp.window_disabled        =  DoOptionBoolean("clownmdemu_disable_window_plane", "enabled");
-	clownmdemu_configuration.vdp.planes_disabled[0]     =  DoOptionBoolean("clownmdemu_disable_plane_a", "enabled");
-	clownmdemu_configuration.vdp.planes_disabled[1]     =  DoOptionBoolean("clownmdemu_disable_plane_b", "enabled");
-	clownmdemu_configuration.fm.fm_channels_disabled[0] =  DoOptionBoolean("clownmdemu_disable_fm1", "enabled");
-	clownmdemu_configuration.fm.fm_channels_disabled[1] =  DoOptionBoolean("clownmdemu_disable_fm2", "enabled");
-	clownmdemu_configuration.fm.fm_channels_disabled[2] =  DoOptionBoolean("clownmdemu_disable_fm3", "enabled");
-	clownmdemu_configuration.fm.fm_channels_disabled[3] =  DoOptionBoolean("clownmdemu_disable_fm4", "enabled");
-	clownmdemu_configuration.fm.fm_channels_disabled[4] =  DoOptionBoolean("clownmdemu_disable_fm5", "enabled");
-	clownmdemu_configuration.fm.fm_channels_disabled[5] =  DoOptionBoolean("clownmdemu_disable_fm6", "enabled");
-	clownmdemu_configuration.fm.dac_channel_disabled    =  DoOptionBoolean("clownmdemu_disable_dac", "enabled");
-	clownmdemu_configuration.fm.ladder_effect_disabled  = !DoOptionBoolean("clownmdemu_ladder_effect", "enabled");
-	clownmdemu_configuration.psg.tone_disabled[0]       =  DoOptionBoolean("clownmdemu_disable_psg1", "enabled");
-	clownmdemu_configuration.psg.tone_disabled[1]       =  DoOptionBoolean("clownmdemu_disable_psg2", "enabled");
-	clownmdemu_configuration.psg.tone_disabled[2]       =  DoOptionBoolean("clownmdemu_disable_psg3", "enabled");
-	clownmdemu_configuration.psg.noise_disabled         =  DoOptionBoolean("clownmdemu_disable_psg_noise", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[0]   =  DoOptionBoolean("clownmdemu_disable_pcm1", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[1]   =  DoOptionBoolean("clownmdemu_disable_pcm2", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[2]   =  DoOptionBoolean("clownmdemu_disable_pcm3", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[3]   =  DoOptionBoolean("clownmdemu_disable_pcm4", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[4]   =  DoOptionBoolean("clownmdemu_disable_pcm5", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[5]   =  DoOptionBoolean("clownmdemu_disable_pcm6", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[6]   =  DoOptionBoolean("clownmdemu_disable_pcm7", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[7]   =  DoOptionBoolean("clownmdemu_disable_pcm8", "enabled");
+	clownmdemu_configuration.general.region                   =  DoOptionBoolean("clownmdemu_overseas_region", "elsewhere") ? CLOWNMDEMU_REGION_OVERSEAS : CLOWNMDEMU_REGION_DOMESTIC;
+	clownmdemu_configuration.general.tv_standard              =  pal_mode_enabled ? CLOWNMDEMU_TV_STANDARD_PAL : CLOWNMDEMU_TV_STANDARD_NTSC;
+	clownmdemu_configuration.general.low_pass_filter_disabled = !DoOptionBoolean("clownmdemu_lowpass_filter", "enabled");
+	clownmdemu_configuration.vdp.sprites_disabled             =  DoOptionBoolean("clownmdemu_disable_sprite_plane", "enabled");
+	clownmdemu_configuration.vdp.window_disabled              =  DoOptionBoolean("clownmdemu_disable_window_plane", "enabled");
+	clownmdemu_configuration.vdp.planes_disabled[0]           =  DoOptionBoolean("clownmdemu_disable_plane_a", "enabled");
+	clownmdemu_configuration.vdp.planes_disabled[1]           =  DoOptionBoolean("clownmdemu_disable_plane_b", "enabled");
+	clownmdemu_configuration.fm.fm_channels_disabled[0]       =  DoOptionBoolean("clownmdemu_disable_fm1", "enabled");
+	clownmdemu_configuration.fm.fm_channels_disabled[1]       =  DoOptionBoolean("clownmdemu_disable_fm2", "enabled");
+	clownmdemu_configuration.fm.fm_channels_disabled[2]       =  DoOptionBoolean("clownmdemu_disable_fm3", "enabled");
+	clownmdemu_configuration.fm.fm_channels_disabled[3]       =  DoOptionBoolean("clownmdemu_disable_fm4", "enabled");
+	clownmdemu_configuration.fm.fm_channels_disabled[4]       =  DoOptionBoolean("clownmdemu_disable_fm5", "enabled");
+	clownmdemu_configuration.fm.fm_channels_disabled[5]       =  DoOptionBoolean("clownmdemu_disable_fm6", "enabled");
+	clownmdemu_configuration.fm.dac_channel_disabled          =  DoOptionBoolean("clownmdemu_disable_dac", "enabled");
+	clownmdemu_configuration.fm.ladder_effect_disabled        = !DoOptionBoolean("clownmdemu_ladder_effect", "enabled");
+	clownmdemu_configuration.psg.tone_disabled[0]             =  DoOptionBoolean("clownmdemu_disable_psg1", "enabled");
+	clownmdemu_configuration.psg.tone_disabled[1]             =  DoOptionBoolean("clownmdemu_disable_psg2", "enabled");
+	clownmdemu_configuration.psg.tone_disabled[2]             =  DoOptionBoolean("clownmdemu_disable_psg3", "enabled");
+	clownmdemu_configuration.psg.noise_disabled               =  DoOptionBoolean("clownmdemu_disable_psg_noise", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[0]         =  DoOptionBoolean("clownmdemu_disable_pcm1", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[1]         =  DoOptionBoolean("clownmdemu_disable_pcm2", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[2]         =  DoOptionBoolean("clownmdemu_disable_pcm3", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[3]         =  DoOptionBoolean("clownmdemu_disable_pcm4", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[4]         =  DoOptionBoolean("clownmdemu_disable_pcm5", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[5]         =  DoOptionBoolean("clownmdemu_disable_pcm6", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[6]         =  DoOptionBoolean("clownmdemu_disable_pcm7", "enabled");
+	clownmdemu_configuration.pcm.channels_disabled[7]         =  DoOptionBoolean("clownmdemu_disable_pcm8", "enabled");
 }
 
 /************************/
@@ -977,7 +974,7 @@ void retro_init(void)
 
 	/* Initialise the mixer. */
 	Mixer_Constant_Initialise(&mixer_constant);
-	Mixer_State_Initialise(&mixer_state, lowpass_filter_enabled ? SAMPLE_RATE_WITH_LOWPASS : SAMPLE_RATE_NO_LOWPASS, pal_mode_enabled, cc_false);
+	Mixer_State_Initialise(&mixer_state, SAMPLE_RATE, pal_mode_enabled);
 
 	CDReader_Initialise(&cd_reader);
 }
@@ -1060,7 +1057,7 @@ void retro_get_system_av_info(struct retro_system_av_info* const info)
 	SetGeometry(&info->geometry);
 
 	info->timing.fps = pal_mode_enabled ? CLOWNMDEMU_MULTIPLY_BY_PAL_FRAMERATE(1.0) : CLOWNMDEMU_MULTIPLY_BY_NTSC_FRAMERATE(1.0);	/* Standard PAL and NTSC framerates. */
-	info->timing.sample_rate = lowpass_filter_enabled ? (double)SAMPLE_RATE_WITH_LOWPASS : (double)SAMPLE_RATE_NO_LOWPASS;
+	info->timing.sample_rate = (double)SAMPLE_RATE;
 }
 
 void retro_set_environment(const retro_environment_t environment_callback)
