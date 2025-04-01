@@ -51,9 +51,9 @@ static void *current_framebuffer;
 static size_t current_framebuffer_pitch;
 static unsigned int current_screen_width;
 static unsigned int current_screen_height;
-static void (*scanline_rendered_callback)(void *user_data, const cc_u8l *source_pixels, void *destination_pixels, unsigned int screen_width);
+static void (*scanline_rendered_callback)(void *user_data, const cc_u8l *source_pixels, void *destination_pixels, cc_u16f left_boundary, cc_u16f right_boundary);
 static void (*fallback_colour_updated_callback)(void *user_data, cc_u16f index, cc_u16f colour);
-static void (*fallback_scanline_rendered_callback)(void *user_data, const cc_u8l *source_pixels, void *destination_pixels, unsigned int screen_width);
+static void (*fallback_scanline_rendered_callback)(void *user_data, const cc_u8l *source_pixels, void *destination_pixels, cc_u16f left_boundary, cc_u16f right_boundary);
 
 static unsigned char *local_rom_buffer;
 static const unsigned char *rom;
@@ -337,33 +337,33 @@ static void ColourUpdatedCallback_XRGB8888(void* const user_data, const cc_u16f 
 	                   | (((blue  << 4) | (blue  >> 0)) << (8 * 0));
 }
 
-static void ScanlineRenderedCallback_16Bit(void* const user_data, const cc_u8l* const source_pixels, void* const destination_pixels, const unsigned int screen_width)
+static void ScanlineRenderedCallback_16Bit(void* const user_data, const cc_u8l* const source_pixels, void* const destination_pixels, const cc_u16f left_boundary, const cc_u16f right_boundary)
 {
-	const cc_u8l *source_pixel_pointer = source_pixels;
-	uint16_t *destination_pixel_pointer = (uint16_t*)destination_pixels;
+	const cc_u8l *source_pixel_pointer = source_pixels + left_boundary;
+	uint16_t *destination_pixel_pointer = (uint16_t*)destination_pixels + left_boundary;
 
 	unsigned int i;
 
 	(void)user_data;
 
-	for (i = 0; i < screen_width; ++i)
+	for (i = left_boundary; i < right_boundary; ++i)
 		*destination_pixel_pointer++ = colours.u16[*source_pixel_pointer++];
 }
 
-static void ScanlineRenderedCallback_32Bit(void* const user_data, const cc_u8l* const source_pixels, void* const destination_pixels, const unsigned int screen_width)
+static void ScanlineRenderedCallback_32Bit(void* const user_data, const cc_u8l* const source_pixels, void* const destination_pixels, const cc_u16f left_boundary, const cc_u16f right_boundary)
 {
-	const cc_u8l *source_pixel_pointer = source_pixels;
-	uint32_t *destination_pixel_pointer = (uint32_t*)destination_pixels;
+	const cc_u8l *source_pixel_pointer = source_pixels + left_boundary;
+	uint32_t *destination_pixel_pointer = (uint32_t*)destination_pixels + left_boundary;
 
 	unsigned int i;
 
 	(void)user_data;
 
-	for (i = 0; i < screen_width; ++i)
+	for (i = left_boundary; i < right_boundary; ++i)
 		*destination_pixel_pointer++ = colours.u32[*source_pixel_pointer++];
 }
 
-static void ScanlineRenderedCallback(void* const user_data, const cc_u16f scanline, const cc_u8l* const pixels, const cc_u16f screen_width, const cc_u16f screen_height)
+static void ScanlineRenderedCallback(void* const user_data, const cc_u16f scanline, const cc_u8l* const pixels, const cc_u16f left_boundary, const cc_u16f right_boundary, const cc_u16f screen_width, const cc_u16f screen_height)
 {
 	/* At the start of the frame, update the screen width and height
 	   and obtain a new framebuffer from the frontend. */
@@ -431,7 +431,7 @@ static void ScanlineRenderedCallback(void* const user_data, const cc_u16f scanli
 
 	/* Prevent mid-frame resolution changes from causing out-of-bound framebuffer accesses. */
 	if (scanline < current_screen_height)
-		scanline_rendered_callback(user_data, pixels, (unsigned char*)current_framebuffer + (current_framebuffer_pitch * scanline), CC_MAX(screen_width, current_screen_width));
+		scanline_rendered_callback(user_data, pixels, (unsigned char*)current_framebuffer + (current_framebuffer_pitch * scanline), left_boundary, right_boundary);
 }
 
 static cc_bool InputRequestedCallback(void* const user_data, const cc_u8f player_id, const ClownMDEmu_Button button_id)
