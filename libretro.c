@@ -14,18 +14,15 @@
 #include "common/core/clownmdemu.h"
 
 #define MIXER_IMPLEMENTATION
-#define MIXER_FORMAT int16_t
 #include "common/mixer.h"
 
 #define FRAMEBUFFER_WIDTH 320
 #define FRAMEBUFFER_HEIGHT 480
 
-#define SAMPLE_RATE 48000
+#define SAMPLE_RATE MIXER_OUTPUT_SAMPLE_RATE
 
 /* Mixer data. */
-static Mixer_Constant mixer_constant;
-static Mixer_State mixer_state;
-static const Mixer mixer = {&mixer_constant, &mixer_state};
+static Mixer_State mixer;
 
 /* clownmdemu data. */
 static ClownMDEmu_Configuration clownmdemu_configuration;
@@ -782,8 +779,8 @@ static void UpdateOptions(const cc_bool only_update_flags)
 
 	if (pal_mode_changed && !only_update_flags)
 	{
-		Mixer_State_Deinitialise(&mixer_state);
-		Mixer_State_Initialise(&mixer_state, SAMPLE_RATE, pal_mode_enabled);
+		Mixer_Deinitialise(&mixer);
+		Mixer_Initialise(&mixer, pal_mode_enabled);
 
 		{
 		struct retro_system_av_info info;
@@ -973,8 +970,7 @@ void retro_init(void)
 	ClownMDEmu_State_Initialise(&clownmdemu_state);
 
 	/* Initialise the mixer. */
-	Mixer_Constant_Initialise(&mixer_constant);
-	Mixer_State_Initialise(&mixer_state, SAMPLE_RATE, pal_mode_enabled);
+	Mixer_Initialise(&mixer, pal_mode_enabled);
 
 	CDReader_Initialise(&cd_reader);
 }
@@ -982,7 +978,7 @@ void retro_init(void)
 void retro_deinit(void)
 {
 	CDReader_Deinitialise(&cd_reader);
-	Mixer_State_Deinitialise(&mixer_state);
+	Mixer_Deinitialise(&mixer);
 }
 
 unsigned int retro_api_version(void)
@@ -1171,7 +1167,7 @@ void retro_reset(void)
 	ClownMDEmu_Reset(&clownmdemu, cc_false); /* TODO: CD support. */
 }
 
-static void MixerCompleteCallback(void* const user_data, const MIXER_FORMAT* const audio_samples, const size_t total_frames)
+static void MixerCompleteCallback(void* const user_data, const cc_s16l* const audio_samples, const size_t total_frames)
 {
 	(void)user_data;
 
@@ -1193,7 +1189,7 @@ void retro_run(void)
 
 	ClownMDEmu_Iterate(&clownmdemu);
 
-	Mixer_End(&mixer, 1, 1, MixerCompleteCallback, NULL);
+	Mixer_End(&mixer, MixerCompleteCallback, NULL);
 
 	/* Update aspect ratio. */
 	{
