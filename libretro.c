@@ -1164,7 +1164,7 @@ void retro_set_video_refresh(const retro_video_refresh_t video_callback)
 
 void retro_reset(void)
 {
-	ClownMDEmu_Reset(&clownmdemu, cc_false); /* TODO: CD support. */
+	ClownMDEmu_Reset(&clownmdemu, cc_false, rom_size); /* TODO: CD support. */
 }
 
 static void MixerCompleteCallback(void* const user_data, const cc_s16l* const audio_samples, const size_t total_frames)
@@ -1249,7 +1249,7 @@ bool retro_load_game(const struct retro_game_info* const info)
 	if (success)
 	{
 		/* Boot the emulated Mega Drive. */
-		ClownMDEmu_Reset(&clownmdemu, cd_boot);
+		ClownMDEmu_Reset(&clownmdemu, cd_boot, rom_size);
 	}
 
 	return success;
