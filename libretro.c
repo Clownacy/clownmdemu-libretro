@@ -1164,7 +1164,9 @@ void retro_set_video_refresh(const retro_video_refresh_t video_callback)
 
 void retro_reset(void)
 {
-	ClownMDEmu_Reset(&clownmdemu, cc_false, rom_size); /* TODO: CD support. */
+	const cc_bool cd_boot = CDReader_IsOpen(&cd_reader) && CDReader_IsMegaCDGame(&cd_reader);
+
+	ClownMDEmu_Reset(&clownmdemu, cd_boot, rom_size);
 }
 
 static void MixerCompleteCallback(void* const user_data, const cc_s16l* const audio_samples, const size_t total_frames)
