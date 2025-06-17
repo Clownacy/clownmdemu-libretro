@@ -14,8 +14,9 @@ standalone frontend aside from the debug menus.
 
 As well as a CMake script, a standard libretro Makefile is provided too.
 
-Be aware that this repo uses Git submodules: use `git submodule update --init`
-to pull in these submodules before compiling.
+Be aware that this repo uses Git submodules: use
+`git submodule update --init --recursive` to pull in these submodules before
+compiling.
 
 
 # Licence
