@@ -1200,6 +1200,7 @@ void retro_run(void)
 	Mixer_End(&mixer, MixerCompleteCallback, NULL);
 
 	/* Update aspect ratio. */
+	/* TODO: Only do this when necessary. */
 	{
 		struct retro_game_geometry geometry;
 		SetGeometry(&geometry);
@@ -1352,6 +1353,7 @@ size_t retro_get_memory_size(const unsigned int id)
 
 void retro_cheat_reset(void)
 {
+	/* TODO: This. */
 }
 
 void retro_cheat_set(const unsigned int index, const bool enabled, const char* const code)
@@ -1359,4 +1361,6 @@ void retro_cheat_set(const unsigned int index, const bool enabled, const char* c
 	(void)index;
 	(void)enabled;
 	(void)code;
+
+	/* TODO: This. */
 }
