@@ -1,3 +1,8 @@
+# Provide an 'stdint.h' for older versions of MSVC.
+ifneq (,$(findstring msvc,$(platform)))
+	INCFLAGS += -Iinclude
+endif
+
 SOURCES_C   := $(CORE_DIR)/libretro.c \
                $(CORE_DIR)/common/unity.c
 

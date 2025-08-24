@@ -22,6 +22,11 @@ set_target_properties(clownmdemu_libretro PROPERTIES
 # Avoid linker errors on Linux.
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# Provide an 'stdint.h' for older versions of MSVC.
+if(MSVC)
+	target_include_directories(clownmdemu_libretro PRIVATE "include")
+endif()
+
 # Prevent the 'lib' prefix from being added, to match the behaviour of the Makefile.
 set_target_properties(clownmdemu_libretro PROPERTIES PREFIX "")
 
