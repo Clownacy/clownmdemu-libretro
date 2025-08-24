@@ -24,7 +24,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Provide an 'stdint.h' for older versions of MSVC.
 if(MSVC AND MSVC_VERSION LESS 1600)
-	target_include_directories(clownmdemu_libretro PRIVATE "include")
+	target_include_directories(clownmdemu_libretro PRIVATE "libretro-common/include/compat/msvc")
 endif()
 
 # Prevent the 'lib' prefix from being added, to match the behaviour of the Makefile.
