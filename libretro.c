@@ -938,12 +938,6 @@ void retro_init(void)
 		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS, &serialisation_quirks);
 	}
 
-	/* Inform frontend of achievement support (implemented by `retro_get_memory_data`). */
-	{
-		const bool achievements_supported = true;
-		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS, &achievements_supported);
-	}
-
 	/* Initialise clownmdemu. */
 	clownmdemu_callbacks.user_data = NULL;
 	clownmdemu_callbacks.cartridge_read    = CartridgeReadCallback;
@@ -1140,6 +1134,12 @@ void retro_set_environment(const retro_environment_t environment_callback)
 		};
 
 		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_CONTENT_INFO_OVERRIDE, (void*)&overrides);
+	}
+
+	/* Inform frontend of achievement support (implemented by `retro_get_memory_data`). */
+	{
+		const bool achievements_supported = true;
+		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS, &achievements_supported);
 	}
 }
 
