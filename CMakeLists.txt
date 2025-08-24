@@ -23,7 +23,7 @@ set_target_properties(clownmdemu_libretro PROPERTIES
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Provide an 'stdint.h' for older versions of MSVC.
-if(MSVC)
+if(MSVC AND MSVC_VERSION < 1600)
 	target_include_directories(clownmdemu_libretro PRIVATE "include")
 endif()
 
