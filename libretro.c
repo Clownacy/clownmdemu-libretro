@@ -1139,7 +1139,7 @@ void retro_set_environment(const retro_environment_t environment_callback)
 	/* Inform frontend of achievement support (implemented by `retro_get_memory_data`). */
 	{
 		const bool achievements_supported = true;
-		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS, &achievements_supported);
+		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS, (void*)&achievements_supported);
 	}
 }
 
