@@ -783,9 +783,9 @@ static void UpdateOptions(const cc_bool only_update_flags)
 		Mixer_Initialise(&mixer, pal_mode_enabled);
 
 		{
-		struct retro_system_av_info info;
-		retro_get_system_av_info(&info);
-		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &info);
+			struct retro_system_av_info info;
+			retro_get_system_av_info(&info);
+			libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &info);
 		}
 	}
 
@@ -934,14 +934,14 @@ void retro_init(void)
 
 	/* Inform frontend of serialisation quirks. */
 	{
-	uint64_t serialisation_quirks = RETRO_SERIALIZATION_QUIRK_ENDIAN_DEPENDENT | RETRO_SERIALIZATION_QUIRK_PLATFORM_DEPENDENT;
-	libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS, &serialisation_quirks);
+		uint64_t serialisation_quirks = RETRO_SERIALIZATION_QUIRK_ENDIAN_DEPENDENT | RETRO_SERIALIZATION_QUIRK_PLATFORM_DEPENDENT;
+		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS, &serialisation_quirks);
 	}
 
 	/* Inform frontend of achievement support (implemented by `retro_get_memory_data`). */
 	{
-	const bool achievements_supported = true;
-	libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS, &achievements_supported);
+		const bool achievements_supported = true;
+		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS, &achievements_supported);
 	}
 
 	/* Initialise clownmdemu. */
@@ -1071,75 +1071,75 @@ void retro_set_environment(const retro_environment_t environment_callback)
 
 	/* Retrieve a log callback from the frontend. */
 	{
-	struct retro_log_callback logging;
-	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &logging) && logging.log != NULL)
-		libretro_callbacks.log = logging.log;
-	else
-		libretro_callbacks.log = FallbackErrorLogCallback;
+		struct retro_log_callback logging;
+		if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &logging) && logging.log != NULL)
+			libretro_callbacks.log = logging.log;
+		else
+			libretro_callbacks.log = FallbackErrorLogCallback;
 	}
 
 	/* TODO: Specialised controller types. */
 	{
-	/*static const struct retro_controller_description controllers[] = {
-		{"Control Pad", RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 0)},
-	};
+		/*static const struct retro_controller_description controllers[] = {
+			{"Control Pad", RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 0)},
+		};
 
-	static const struct retro_controller_info ports[] = {
-		{controllers, CC_COUNT_OF(controllers)},
-		{NULL, 0}
-	};
+		static const struct retro_controller_info ports[] = {
+			{controllers, CC_COUNT_OF(controllers)},
+			{NULL, 0}
+		};
 
-	libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);*/
+		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);*/
 	}
 
 	/* Give the buttons proper names. */
 	{
-	static const struct retro_input_descriptor desc[] = {
-		/* Player 1. */
-		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "Up"    },
-		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "Down"  },
-		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left"  },
-		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "Right" },
-		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "A"     },
-		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B"     },
-		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "C"     },
-		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "X"     },
-		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Y"     },
-		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "Z"     },
-		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Mode"  },
-		/* Player 2. */
-		{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "Up"    },
-		{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "Down"  },
-		{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left"  },
-		{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "Right" },
-		{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "A"     },
-		{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B"     },
-		{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "C"     },
-		{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "X"     },
-		{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Y"     },
-		{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "Z"     },
-		{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-		{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Mode"  },
-		/* End. */
-		{ 0, 0, 0, 0, NULL }
-	};
+		static const struct retro_input_descriptor desc[] = {
+			/* Player 1. */
+			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "Up"    },
+			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "Down"  },
+			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left"  },
+			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "Right" },
+			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "A"     },
+			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B"     },
+			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "C"     },
+			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "X"     },
+			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Y"     },
+			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "Z"     },
+			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
+			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Mode"  },
+			/* Player 2. */
+			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "Up"    },
+			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "Down"  },
+			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left"  },
+			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "Right" },
+			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "A"     },
+			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B"     },
+			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "C"     },
+			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "X"     },
+			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Y"     },
+			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "Z"     },
+			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
+			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Mode"  },
+			/* End. */
+			{ 0, 0, 0, 0, NULL }
+		};
 
-	libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, (void*)&desc);
+		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, (void*)&desc);
 	}
 
 	/* Allow Mega Drive games to be soft-patched by the frontend. */
 	{
-	static const struct retro_system_content_info_override overrides[] = {
-		{
-			"bin|md|gen",
-			false,
-			true
-		},
-		{NULL, false, false}
-	};
+		static const struct retro_system_content_info_override overrides[] = {
+			{
+				"bin|md|gen",
+				false,
+				true
+			},
+			{NULL, false, false}
+		};
 
-	libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_CONTENT_INFO_OVERRIDE, (void*)&overrides);
+		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_CONTENT_INFO_OVERRIDE, (void*)&overrides);
 	}
 }
 
@@ -1201,9 +1201,9 @@ void retro_run(void)
 
 	/* Update aspect ratio. */
 	{
-	struct retro_game_geometry geometry;
-	SetGeometry(&geometry);
-	libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
+		struct retro_game_geometry geometry;
+		SetGeometry(&geometry);
+		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
 	}
 
 	/* Upload the completed frame to the frontend. */
