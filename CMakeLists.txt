@@ -30,6 +30,9 @@ endif()
 # Prevent the 'lib' prefix from being added, to match the behaviour of the Makefile.
 set_target_properties(clownmdemu_libretro PROPERTIES PREFIX "")
 
+# Specify the library name, and append the libretro suffix to it.
+set_target_properties(clownmdemu_libretro PROPERTIES OUTPUT_NAME "clownmdemu_libretro${LIBRETRO_SUFFIX}")
+
 # Add a definition from the Makefile.
 target_compile_definitions(clownmdemu_libretro PRIVATE __LIBRETRO__)
 
