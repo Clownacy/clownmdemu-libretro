@@ -5,7 +5,7 @@ option(BUILD_SHARED_LIBS "Create a shared library instead of a static library." 
 project(clownmdemu-libretro LANGUAGES C)
 
 # Sources.
-add_library(clownmdemu_libretro
+add_library(clownmdemu-libretro
 	"libretro.c"
 	"libretro.h"
 	"common/cd-reader.c"
@@ -13,7 +13,7 @@ add_library(clownmdemu_libretro
 )
 
 # Only require C90.
-set_target_properties(clownmdemu_libretro PROPERTIES
+set_target_properties(clownmdemu-libretro PROPERTIES
 	C_STANDARD 90
 	C_STANDARD_REQUIRED NO
 	C_EXTENSIONS OFF
@@ -24,18 +24,18 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Provide an 'stdint.h' for older versions of MSVC.
 if(MSVC AND MSVC_VERSION LESS 1600)
-	target_include_directories(clownmdemu_libretro PRIVATE "libretro-common/include/compat/msvc")
+	target_include_directories(clownmdemu-libretro PRIVATE "libretro-common/include/compat/msvc")
 endif()
 
 # Prevent the 'lib' prefix from being added, to match the behaviour of the Makefile.
-set_target_properties(clownmdemu_libretro PROPERTIES PREFIX "")
+set_target_properties(clownmdemu-libretro PROPERTIES PREFIX "")
 
 # Specify the library name, and append the libretro suffix to it.
-set_target_properties(clownmdemu_libretro PROPERTIES OUTPUT_NAME "clownmdemu_libretro${LIBRETRO_SUFFIX}")
+set_target_properties(clownmdemu-libretro PROPERTIES OUTPUT_NAME "clownmdemu_libretro${LIBRETRO_SUFFIX}")
 
 # Add a definition from the Makefile.
-target_compile_definitions(clownmdemu_libretro PRIVATE __LIBRETRO__)
+target_compile_definitions(clownmdemu-libretro PRIVATE __LIBRETRO__)
 
 # Link clownmdemu-frontend-common.
 add_subdirectory("common" EXCLUDE_FROM_ALL)
-target_link_libraries(clownmdemu_libretro clownmdemu-frontend-common)
+target_link_libraries(clownmdemu-libretro clownmdemu-frontend-common)
