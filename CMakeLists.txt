@@ -32,5 +32,10 @@ set_target_properties(clownmdemu_libretro PROPERTIES PREFIX "")
 # Specify the library name, and append the libretro suffix to it.
 set_target_properties(clownmdemu_libretro PROPERTIES OUTPUT_NAME "clownmdemu_libretro${LIBRETRO_SUFFIX}")
 
+# libretro's CI expects Emscripten builds to end in '.bc' instead of '.a'.
+if(LIBRETRO_STATIC AND EMSCRIPTEN)
+	set_target_properties(clownmdemu_libretro PROPERTIES SUFFIX ".bc")
+endif()
+
 # Add a definition from the Makefile.
 target_compile_definitions(clownmdemu_libretro PRIVATE __LIBRETRO__)
