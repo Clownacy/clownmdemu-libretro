@@ -5,11 +5,10 @@ option(BUILD_SHARED_LIBS "Create a shared library instead of a static library." 
 project(clownmdemu-libretro LANGUAGES C)
 
 # Sources.
+# A unity build must be used so that static builds produce a single static library,
+# as libretro's CI does not account for more than one static library being produced.
 add_library(clownmdemu-libretro
-	"libretro.c"
-	"libretro.h"
-	"common/cd-reader.c"
-	"common/cd-reader.h"
+	"unity.c"
 )
 
 # Only require C90.
@@ -35,7 +34,3 @@ set_target_properties(clownmdemu-libretro PROPERTIES OUTPUT_NAME "clownmdemu_lib
 
 # Add a definition from the Makefile.
 target_compile_definitions(clownmdemu-libretro PRIVATE __LIBRETRO__)
-
-# Link clownmdemu-frontend-common.
-add_subdirectory("common" EXCLUDE_FROM_ALL)
-target_link_libraries(clownmdemu-libretro clownmdemu-frontend-common)
