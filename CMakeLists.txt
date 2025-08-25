@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0...3.16.3)
 
 option(BUILD_SHARED_LIBS "Create a shared library instead of a static library." ON)
 
-project(clownmdemu-libretro LANGUAGES C)
+project(clownmdemu_libretro LANGUAGES C)
 
 # Sources.
 # A unity build must be used so that static builds produce a single static library,
