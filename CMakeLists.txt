@@ -8,8 +8,6 @@ project(clownmdemu-libretro LANGUAGES C)
 add_library(clownmdemu_libretro
 	"libretro.c"
 	"libretro.h"
-	"common/cd-reader.c"
-	"common/cd-reader.h"
 )
 
 # Only require C90.
