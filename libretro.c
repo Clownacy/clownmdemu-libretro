@@ -1211,6 +1211,23 @@ void retro_run(void)
 	libretro_callbacks.video(current_framebuffer, current_screen_width, current_screen_height, current_framebuffer_pitch);
 }
 
+static void SetMemoryMaps(const unsigned char* const rom, const size_t rom_size)
+{
+	/* Does not reflect the actual memory layout, as addresses are arbitrarily defined by RetroAchievements:
+	   https://github.com/RetroAchievements/rcheevos/blob/86aeb6e783e0b9f8687129d79d2e53ea92f3e5f0/src/rcheevos/consoleinfo.c#L838-L842 */
+	const struct retro_memory_descriptor descriptors[] = {
+		{RETRO_MEMDESC_CONST      | RETRO_MEMDESC_BIGENDIAN, (void*)rom,                                      0, 0x00000000, 0, 0, rom_size                                        , "ROM"    },
+		{RETRO_MEMDESC_SYSTEM_RAM | RETRO_MEMDESC_BIGENDIAN, (void*)clownmdemu_state.m68k.ram,                0, 0x00FF0000, 0, 0, sizeof(clownmdemu_state.m68k.ram)               , "68KRAM" },
+		{RETRO_MEMDESC_SYSTEM_RAM | RETRO_MEMDESC_BIGENDIAN, (void*)clownmdemu_state.mega_cd.prg_ram.buffer,  0, 0x80020000, 0, 0, sizeof(clownmdemu_state.mega_cd.prg_ram.buffer) , "PRGRAM" },
+		{RETRO_MEMDESC_SYSTEM_RAM | RETRO_MEMDESC_BIGENDIAN, (void*)clownmdemu_state.mega_cd.word_ram.buffer, 0, 0x00200000, 0, 0, sizeof(clownmdemu_state.mega_cd.word_ram.buffer), "WORDRAM"},
+		{RETRO_MEMDESC_SYSTEM_RAM,                           (void*)clownmdemu_state.z80.ram,                 0, 0x00A00000, 0, 0, sizeof(clownmdemu_state.z80.ram)                , "Z80RAM" },
+	};
+
+	const struct retro_memory_map memory_maps = {descriptors, CC_COUNT_OF(descriptors)};
+
+	libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_MEMORY_MAPS, (void*)&memory_maps);
+}
+
 bool retro_load_game(const struct retro_game_info* const info)
 {
 	bool success = false;
@@ -1258,26 +1275,7 @@ bool retro_load_game(const struct retro_game_info* const info)
 	if (success)
 	{
 		/* Provide memory descriptors to the frontend (needed for achievements, cheats, and the like). */
-		{
-			struct retro_memory_descriptor descriptors[] = {
-				{RETRO_MEMDESC_CONST      | RETRO_MEMDESC_BIGENDIAN, (void*)NULL,                                     0, 0x00000000, 0, 0, 0                                               , "ROM"    },
-				{RETRO_MEMDESC_SYSTEM_RAM | RETRO_MEMDESC_BIGENDIAN, (void*)clownmdemu_state.m68k.ram,                0, 0x00FF0000, 0, 0, sizeof(clownmdemu_state.m68k.ram)               , "68KRAM" },
-				/* The high bit of the address functions as a flag, which is a shame because it is rather obscure. */
-				{RETRO_MEMDESC_SYSTEM_RAM | RETRO_MEMDESC_BIGENDIAN, (void*)clownmdemu_state.mega_cd.prg_ram.buffer,  0, 0x80020000, 0, 0, sizeof(clownmdemu_state.mega_cd.prg_ram.buffer) , "PRGRAM" },
-				{RETRO_MEMDESC_SYSTEM_RAM | RETRO_MEMDESC_BIGENDIAN, (void*)clownmdemu_state.mega_cd.word_ram.buffer, 0, 0x00200000, 0, 0, sizeof(clownmdemu_state.mega_cd.word_ram.buffer), "WORDRAM"},
-				{RETRO_MEMDESC_SYSTEM_RAM,                           (void*)clownmdemu_state.z80.ram,                 0, 0x00A00000, 0, 0, sizeof(clownmdemu_state.z80.ram)                , "Z80RAM" },
-			};
-
-			struct retro_memory_map memory_maps;
-			memory_maps.descriptors = descriptors;
-			memory_maps.num_descriptors = CC_COUNT_OF(descriptors);
-
-			/* Specify ROM location and size. */
-			descriptors[0].ptr = rom;
-			descriptors[0].len = rom_size;
-
-			libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_MEMORY_MAPS, (void*)&memory_maps);
-		}
+		SetMemoryMaps(rom, rom_size);
 
 		/* Boot the emulated Mega Drive. */
 		ClownMDEmu_Reset(&clownmdemu, cd_boot, rom_size);
