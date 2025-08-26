@@ -1136,7 +1136,7 @@ void retro_set_environment(const retro_environment_t environment_callback)
 		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_CONTENT_INFO_OVERRIDE, (void*)&overrides);
 	}
 
-	/* Inform frontend of achievement support (implemented by `retro_get_memory_data`). */
+	/* Inform frontend of achievement support (implemented by `RETRO_ENVIRONMENT_SET_MEMORY_MAPS`). */
 	{
 		const bool achievements_supported = true;
 		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS, (void*)&achievements_supported);
@@ -1257,6 +1257,28 @@ bool retro_load_game(const struct retro_game_info* const info)
 
 	if (success)
 	{
+		/* Provide memory descriptors to the frontend (needed for achievements, cheats, and the like). */
+		{
+			struct retro_memory_descriptor descriptors[] = {
+				{RETRO_MEMDESC_CONST      | RETRO_MEMDESC_BIGENDIAN, (void*)NULL,                                     0, 0x00000000, 0, 0, 0                                               , "ROM"    },
+				{RETRO_MEMDESC_SYSTEM_RAM | RETRO_MEMDESC_BIGENDIAN, (void*)clownmdemu_state.m68k.ram,                0, 0x00FF0000, 0, 0, sizeof(clownmdemu_state.m68k.ram)               , "68KRAM" },
+				/* The high bit of the address functions as a flag, which is a shame because it is rather obscure. */
+				{RETRO_MEMDESC_SYSTEM_RAM | RETRO_MEMDESC_BIGENDIAN, (void*)clownmdemu_state.mega_cd.prg_ram.buffer,  0, 0x80020000, 0, 0, sizeof(clownmdemu_state.mega_cd.prg_ram.buffer) , "PRGRAM" },
+				{RETRO_MEMDESC_SYSTEM_RAM | RETRO_MEMDESC_BIGENDIAN, (void*)clownmdemu_state.mega_cd.word_ram.buffer, 0, 0x00200000, 0, 0, sizeof(clownmdemu_state.mega_cd.word_ram.buffer), "WORDRAM"},
+				{RETRO_MEMDESC_SYSTEM_RAM,                           (void*)clownmdemu_state.z80.ram,                 0, 0x00A00000, 0, 0, sizeof(clownmdemu_state.z80.ram)                , "Z80RAM" },
+			};
+
+			struct retro_memory_map memory_maps;
+			memory_maps.descriptors = descriptors;
+			memory_maps.num_descriptors = CC_COUNT_OF(descriptors);
+
+			/* Specify ROM location and size. */
+			descriptors[0].ptr = rom;
+			descriptors[0].len = rom_size;
+
+			libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_MEMORY_MAPS, (void*)&memory_maps);
+		}
+
 		/* Boot the emulated Mega Drive. */
 		ClownMDEmu_Reset(&clownmdemu, cd_boot, rom_size);
 	}
