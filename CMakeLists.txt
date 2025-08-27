@@ -12,10 +12,11 @@ add_library(clownmdemu_libretro
 )
 
 # Only require C90.
+# Do not prevent extensions, since some may optionally
+# be used for a performance boost (as Clown68000 does).
 set_target_properties(clownmdemu_libretro PROPERTIES
 	C_STANDARD 90
 	C_STANDARD_REQUIRED NO
-	C_EXTENSIONS OFF
 )
 
 ############################################
