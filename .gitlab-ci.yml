@@ -65,7 +65,7 @@ include:
 
   # PlayStation4
   - project: 'libretro-infrastructure/ci-templates'
-    file: '/orbis-static-cmake.yml'
+    file: '/orbis-static.yml'
     
   # PlayStation Vita
   - project: 'libretro-infrastructure/ci-templates'
@@ -246,7 +246,7 @@ libretro-build-psl1ght:
 # PlayStation4
 libretro-build-orbis:
   extends:
-    - .libretro-orbis-static-cmake-retroarch-master
+    - .libretro-orbis-static-retroarch-master
     - .core-defs
 
 # PlayStation Vita
