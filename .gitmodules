@@ -1,3 +1,6 @@
 [submodule "clownmdemu-frontend-common"]
 	path = common
 	url = https://github.com/Clownacy/clownmdemu-frontend-common
+[submodule "libretro-common"]
+	path = libretro-common
+	url = https://github.com/libretro/libretro-common

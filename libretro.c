@@ -821,7 +821,7 @@ static cc_bool DoOptionBoolean(const char* const key, const char* const true_val
 
 static void UpdateOptions(const cc_bool only_update_flags)
 {
-	const cc_bool pal_mode_changed       = pal_mode_enabled       != DoOptionBoolean("clownmdemu_tv_standard", "pal");
+	const cc_bool pal_mode_changed = pal_mode_enabled != DoOptionBoolean("clownmdemu_tv_standard", "pal");
 
 	pal_mode_enabled ^= pal_mode_changed;
 

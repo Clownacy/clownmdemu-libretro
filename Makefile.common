@@ -1,3 +1,3 @@
-SOURCES_C   := $(CORE_DIR)/unity.c
+CFLAGS += -Ilibretro-common/include
 
-SOURCES_CXX := 
+SOURCES_C   := $(CORE_DIR)/unity.c
