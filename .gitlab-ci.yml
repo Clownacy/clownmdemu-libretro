@@ -16,7 +16,11 @@ include:
   # Windows
   - project: 'libretro-infrastructure/ci-templates'
     file: '/windows-cmake-mingw.yml'
-    
+
+  # Windows msvc19
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/windows-cmake-msvc19.yml'
+
   # Windows msvc10 64-bit
   - project: 'libretro-infrastructure/ci-templates'
     file: '/windows-x64-msvc10-msys2.yml'
@@ -121,6 +125,18 @@ libretro-build-windows-x64:
 libretro-build-windows-i686:
   extends:
     - .libretro-windows-cmake-x86
+    - .core-defs
+
+# Windows msvc19 64-bit
+libretro-build-windows-msvc19-x64:
+  extends:
+    - .libretro-windows-msvc19-cmake-x86_64
+    - .core-defs
+
+# Windows msvc19 32-bit
+libretro-build-windows-msvc19-i686:
+  extends:
+    - .libretro-windows-msvc19-cmake-x86
     - .core-defs
 
 # Windows msvc10 64-bit
