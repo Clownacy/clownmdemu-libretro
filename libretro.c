@@ -46,8 +46,6 @@ static union
 
 static void *current_framebuffer;
 static size_t current_framebuffer_pitch;
-static unsigned int current_screen_width;
-static unsigned int current_screen_height;
 static void (*scanline_rendered_callback)(void *user_data, const cc_u8l *source_pixels, void *destination_pixels, cc_u16f left_boundary, cc_u16f right_boundary);
 static void (*fallback_colour_updated_callback)(void *user_data, cc_u16f index, cc_u16f colour);
 static void (*fallback_scanline_rendered_callback)(void *user_data, const cc_u8l *source_pixels, void *destination_pixels, cc_u16f left_boundary, cc_u16f right_boundary);
@@ -59,7 +57,6 @@ static size_t rom_size;
 static CDReader_State cd_reader;
 
 static cc_bool pal_mode_enabled;
-static cc_bool tall_interlace_mode_2;
 
 static struct retro_vfs_file_handle *buram_file_handle;
 
@@ -73,6 +70,58 @@ static struct
 	retro_input_state_t        input_state;
 	CC_ATTRIBUTE_PRINTF(2, 3) retro_log_printf_t log;
 } libretro_callbacks;
+
+/************/
+/* Geometry */
+/************/
+
+static struct
+{
+	unsigned int current_screen_width;
+	unsigned int current_screen_height;
+	cc_bool tall_interlace_mode_2;
+} geometry;
+
+static void Geometry_Export(struct retro_game_geometry* const output)
+{
+	output->base_width   = geometry.current_screen_width;
+	output->base_height  = geometry.current_screen_height;
+	output->max_width    = FRAMEBUFFER_WIDTH;
+	output->max_height   = FRAMEBUFFER_HEIGHT;
+	output->aspect_ratio = 320.0f / (float)geometry.current_screen_height;
+
+	/* Squish the aspect ratio vertically when in Interlace Mode 2. */
+	if (!geometry.tall_interlace_mode_2 && geometry.current_screen_height >= 448)
+		output->aspect_ratio *= 2.0f;
+}
+
+static void Geometry_Update(void)
+{
+	struct retro_game_geometry geometry;
+	Geometry_Export(&geometry);
+	libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
+}
+
+static void Geometry_SetScreenSize(const unsigned int width, const unsigned int height)
+{
+	if (geometry.current_screen_width == width && geometry.current_screen_height == height)
+		return;
+
+	geometry.current_screen_width = width;
+	geometry.current_screen_height = height;
+
+	Geometry_Update();
+}
+
+static void Geometry_SetTallInterlaceMode2(const cc_bool tall_interlace_mode_2)
+{
+	if (geometry.tall_interlace_mode_2 == tall_interlace_mode_2)
+		return;
+
+	geometry.tall_interlace_mode_2 = tall_interlace_mode_2;
+
+	Geometry_Update();
+}
 
 /***********/
 /* File IO */
@@ -422,12 +471,11 @@ static void ScanlineRenderedCallback(void* const user_data, const cc_u16f scanli
 			scanline_rendered_callback = fallback_scanline_rendered_callback;
 		}
 
-		current_screen_width = screen_width;
-		current_screen_height = screen_height;
+		Geometry_SetScreenSize(screen_width, screen_height);
 	}
 
 	/* Prevent mid-frame resolution changes from causing out-of-bound framebuffer accesses. */
-	if (scanline < current_screen_height)
+	if (scanline < geometry.current_screen_height)
 		scanline_rendered_callback(user_data, pixels, (unsigned char*)current_framebuffer + (current_framebuffer_pitch * scanline), left_boundary, right_boundary);
 }
 
@@ -789,7 +837,7 @@ static void UpdateOptions(const cc_bool only_update_flags)
 		}
 	}
 
-	tall_interlace_mode_2 = DoOptionBoolean("clownmdemu_tall_interlace_mode_2", "enabled");
+	Geometry_SetTallInterlaceMode2(DoOptionBoolean("clownmdemu_tall_interlace_mode_2", "enabled"));
 
 	clownmdemu_configuration.general.region                   =  DoOptionBoolean("clownmdemu_overseas_region", "elsewhere") ? CLOWNMDEMU_REGION_OVERSEAS : CLOWNMDEMU_REGION_DOMESTIC;
 	clownmdemu_configuration.general.tv_standard              =  pal_mode_enabled ? CLOWNMDEMU_TV_STANDARD_PAL : CLOWNMDEMU_TV_STANDARD_NTSC;
@@ -1004,19 +1052,6 @@ void retro_get_system_info(struct retro_system_info* const info)
 	info->block_extract    = false;
 }
 
-static void SetGeometry(struct retro_game_geometry* const geometry)
-{
-	geometry->base_width   = current_screen_width;
-	geometry->base_height  = current_screen_height;
-	geometry->max_width    = FRAMEBUFFER_WIDTH;
-	geometry->max_height   = FRAMEBUFFER_HEIGHT;
-	geometry->aspect_ratio = 320.0f / (float)current_screen_height;
-
-	/* Squish the aspect ratio vertically when in Interlace Mode 2. */
-	if (!tall_interlace_mode_2 && current_screen_height >= 448)
-		geometry->aspect_ratio *= 2.0f;
-}
-
 void retro_get_system_av_info(struct retro_system_av_info* const info)
 {
 	enum retro_pixel_format pixel_format;
@@ -1045,12 +1080,11 @@ void retro_get_system_av_info(struct retro_system_av_info* const info)
 		}
 	}
 
-	/* Initialise these to avoid a division by 0 in SetGeometry. */
-	current_screen_width = 320;
-	current_screen_height = 224;
+	/* Initialise these to avoid a division by 0 in Geometry_Export. */
+	Geometry_SetScreenSize(320, 224);
 
 	/* Populate the 'retro_system_av_info' struct. */
-	SetGeometry(&info->geometry);
+	Geometry_Export(&info->geometry);
 
 	info->timing.fps = pal_mode_enabled ? CLOWNMDEMU_MULTIPLY_BY_PAL_FRAMERATE(1.0) : CLOWNMDEMU_MULTIPLY_BY_NTSC_FRAMERATE(1.0);	/* Standard PAL and NTSC framerates. */
 	info->timing.sample_rate = (double)SAMPLE_RATE;
@@ -1199,16 +1233,8 @@ void retro_run(void)
 
 	Mixer_End(&mixer, MixerCompleteCallback, NULL);
 
-	/* Update aspect ratio. */
-	/* TODO: Only do this when necessary. */
-	{
-		struct retro_game_geometry geometry;
-		SetGeometry(&geometry);
-		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
-	}
-
 	/* Upload the completed frame to the frontend. */
-	libretro_callbacks.video(current_framebuffer, current_screen_width, current_screen_height, current_framebuffer_pitch);
+	libretro_callbacks.video(current_framebuffer, geometry.current_screen_width, geometry.current_screen_height, current_framebuffer_pitch);
 }
 
 static void SetMemoryMaps(const unsigned char* const rom, const size_t rom_size)
