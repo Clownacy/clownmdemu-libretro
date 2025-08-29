@@ -801,7 +801,7 @@ static void ClownMDEmuLog(void* const user_data, const char* const format, va_li
 
 	(void)user_data;
 
-	/* TODO: This unbounded printf is so gross... */
+	/* TODO: This unbounded printf is so nasty... */
 	vsprintf(message_buffer, format, arg);
 	strcat(message_buffer, "\n");
 
