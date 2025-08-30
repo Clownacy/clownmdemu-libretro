@@ -16,8 +16,8 @@
 #define MIXER_IMPLEMENTATION
 #include "common/mixer.h"
 
-#define FRAMEBUFFER_WIDTH 320
-#define FRAMEBUFFER_HEIGHT 480
+#define FRAMEBUFFER_WIDTH VDP_MAX_SCANLINE_WIDTH
+#define FRAMEBUFFER_HEIGHT VDP_MAX_SCANLINES
 
 #define SAMPLE_RATE MIXER_OUTPUT_SAMPLE_RATE
 
@@ -88,7 +88,7 @@ static void Geometry_Export(struct retro_game_geometry* const output)
 	output->base_height  = geometry.current_screen_height;
 	output->max_width    = FRAMEBUFFER_WIDTH;
 	output->max_height   = FRAMEBUFFER_HEIGHT;
-	output->aspect_ratio = 320.0f / (float)geometry.current_screen_height;
+	output->aspect_ratio = (clownmdemu_configuration.vdp.widescreen_enabled ? 400.0f : 320.0f) / (float)geometry.current_screen_height;
 
 	/* Squish the aspect ratio vertically when in Interlace Mode 2. */
 	if (!geometry.tall_interlace_mode_2 && geometry.current_screen_height >= 448)
@@ -846,6 +846,7 @@ static void UpdateOptions(const cc_bool only_update_flags)
 	clownmdemu_configuration.vdp.window_disabled              =  DoOptionBoolean("clownmdemu_disable_window_plane", "enabled");
 	clownmdemu_configuration.vdp.planes_disabled[0]           =  DoOptionBoolean("clownmdemu_disable_plane_a", "enabled");
 	clownmdemu_configuration.vdp.planes_disabled[1]           =  DoOptionBoolean("clownmdemu_disable_plane_b", "enabled");
+	clownmdemu_configuration.vdp.widescreen_enabled           =  DoOptionBoolean("clownmdemu_widescreen", "enabled");
 	clownmdemu_configuration.fm.fm_channels_disabled[0]       =  DoOptionBoolean("clownmdemu_disable_fm1", "enabled");
 	clownmdemu_configuration.fm.fm_channels_disabled[1]       =  DoOptionBoolean("clownmdemu_disable_fm2", "enabled");
 	clownmdemu_configuration.fm.fm_channels_disabled[2]       =  DoOptionBoolean("clownmdemu_disable_fm3", "enabled");

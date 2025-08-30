@@ -494,6 +494,28 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 	},
 	{
 		/* Key. */
+		"clownmdemu_widescreen",
+		/* Label. */
+		"Widescreen Hack",
+		/* Categorised label. */
+		NULL,
+		/* Description. */
+		"Widens the display. Works well with some games, badly with others.",
+		/* Categorised description. */
+		NULL,
+		/* Category. */
+		NULL,
+		/* Values. */
+		{
+			{"enabled", NULL},
+			{"disabled", NULL},
+			{NULL, NULL},
+		},
+		/* Default value. */
+		"disabled"
+	},
+	{
+		/* Key. */
 		"clownmdemu_lowpass_filter",
 		/* Label. */
 		"Low-Pass Filter",
