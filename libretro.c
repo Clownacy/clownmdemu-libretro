@@ -1052,10 +1052,14 @@ void retro_set_controller_port_device(const unsigned int port, const unsigned in
 	/*libretro_callbacks.log(RETRO_LOG_INFO, "Plugging device %u into port %u.\n", device, port);*/
 }
 
+#ifndef GIT_VERSION
+#define GIT_VERSION ""
+#endif
+
 void retro_get_system_info(struct retro_system_info* const info)
 {
 	info->library_name     = "ClownMDEmu";
-	info->library_version  = "v1.5";
+	info->library_version  = "v1.5" GIT_VERSION;
 	info->need_fullpath    = true;
 	info->valid_extensions = "bin|md|gen|cue|iso";
 	info->block_extract    = false;

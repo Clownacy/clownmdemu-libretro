@@ -49,3 +49,16 @@ set_target_properties(clownmdemu_libretro PROPERTIES OUTPUT_NAME "clownmdemu_lib
 if(LIBRETRO_STATIC AND EMSCRIPTEN)
 	set_target_properties(clownmdemu_libretro PROPERTIES SUFFIX ".bc")
 endif()
+
+# Obtain the Git revision so that it can be displayed in the core's version string.
+find_package(Git)
+if(GIT_FOUND)
+	execute_process(
+		COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
+		RESULT_VARIABLE GIT_RETURN_CODE
+		OUTPUT_VARIABLE GIT_VERSION
+	)
+	if(GIT_RETURN_CODE EQUAL 0)
+		target_compile_definitions(clownmdemu_libretro PRIVATE GIT_VERSION=" ${GIT_VERSION}")
+	endif()
+endif()
