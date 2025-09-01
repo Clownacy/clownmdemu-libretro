@@ -80,6 +80,7 @@ static struct
 	unsigned int current_screen_width;
 	unsigned int current_screen_height;
 	cc_bool tall_interlace_mode_2;
+	cc_bool update_pending;
 } geometry;
 
 static void Geometry_Export(struct retro_game_geometry* const output)
@@ -97,9 +98,16 @@ static void Geometry_Export(struct retro_game_geometry* const output)
 
 static void Geometry_Update(void)
 {
-	struct retro_game_geometry geometry;
-	Geometry_Export(&geometry);
-	libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
+	if (geometry.update_pending)
+	{
+		geometry.update_pending = cc_false;
+
+		{
+			struct retro_game_geometry geometry;
+			Geometry_Export(&geometry);
+			libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
+		}
+	}
 }
 
 static void Geometry_SetScreenSize(const unsigned int width, const unsigned int height)
@@ -110,7 +118,7 @@ static void Geometry_SetScreenSize(const unsigned int width, const unsigned int 
 	geometry.current_screen_width = width;
 	geometry.current_screen_height = height;
 
-	Geometry_Update();
+	geometry.update_pending = cc_true;
 }
 
 static void Geometry_SetTallInterlaceMode2(const cc_bool tall_interlace_mode_2)
@@ -120,7 +128,7 @@ static void Geometry_SetTallInterlaceMode2(const cc_bool tall_interlace_mode_2)
 
 	geometry.tall_interlace_mode_2 = tall_interlace_mode_2;
 
-	Geometry_Update();
+	geometry.update_pending = cc_true;
 }
 
 /***********/
@@ -1233,6 +1241,8 @@ void retro_run(void)
 	ClownMDEmu_Iterate(&clownmdemu);
 
 	Mixer_End(&mixer, MixerCompleteCallback, NULL);
+
+	Geometry_Update();
 
 	/* Upload the completed frame to the frontend. */
 	libretro_callbacks.video(current_framebuffer, geometry.current_screen_width, geometry.current_screen_height, current_framebuffer_pitch);
