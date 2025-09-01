@@ -55,10 +55,10 @@ find_package(Git)
 if(GIT_FOUND)
 	execute_process(
 		COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
-		RESULT_VARIABLE GIT_RETURN_CODE
 		OUTPUT_VARIABLE GIT_VERSION
+		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
-	if(GIT_RETURN_CODE EQUAL 0)
+	if(GIT_VERSION)
 		target_compile_definitions(clownmdemu_libretro PRIVATE GIT_VERSION=" ${GIT_VERSION}")
 	endif()
 endif()
