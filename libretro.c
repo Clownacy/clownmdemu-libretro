@@ -9,6 +9,7 @@
 
 #include "libretro.h"
 #include "libretro_core_options.h"
+#include "retro_endianness.h"
 
 #include "common/cd-reader.h"
 #include "common/core/clownmdemu.h"
