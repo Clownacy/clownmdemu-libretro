@@ -28,7 +28,7 @@
 /* Mixer data. */
 static Mixer_State mixer;
 
-/* clownmdemu data. */
+/* ClownMDEmu data. */
 static ClownMDEmu_Configuration clownmdemu_configuration;
 static ClownMDEmu_Constant clownmdemu_constant;
 static ClownMDEmu_State clownmdemu_state;
@@ -999,7 +999,7 @@ void retro_init(void)
 		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS, &serialisation_quirks);
 	}
 
-	/* Initialise clownmdemu. */
+	/* Initialise ClownMDEmu. */
 	clownmdemu_callbacks.user_data = NULL;
 	clownmdemu_callbacks.cartridge_read    = CartridgeReadCallback;
 	clownmdemu_callbacks.cartridge_written = CartridgeWriteCallback;
