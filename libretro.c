@@ -1190,12 +1190,8 @@ void retro_set_environment(const retro_environment_t environment_callback)
 	/* Allow Mega Drive games to be soft-patched by the frontend. */
 	{
 		static const struct retro_system_content_info_override overrides[] = {
-			{
-				CARTRIDGE_FILE_EXTENSIONS,
-				false,
-				true
-			},
-			{NULL, false, false}
+			{ CARTRIDGE_FILE_EXTENSIONS, false, true },
+			{ NULL, false, false }
 		};
 
 		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_CONTENT_INFO_OVERRIDE, (void*)&overrides);
