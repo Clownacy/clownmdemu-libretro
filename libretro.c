@@ -1180,7 +1180,7 @@ void retro_set_environment(const retro_environment_t environment_callback)
 		};
 
 		static const struct retro_subsystem_info info[] = {
-			{ "Mega CD Mode 1", "mcdmode1", rom_info, CC_COUNT_OF(rom_info), 0 },
+			{ "Cartridge + CD", "cartandcd", rom_info, CC_COUNT_OF(rom_info), 0 },
 			{ NULL, NULL, NULL, 0, 0 }
 		};
 
