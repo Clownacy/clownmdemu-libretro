@@ -1315,6 +1315,7 @@ bool retro_load_game(const struct retro_game_info* const info)
 
 void retro_unload_game(void)
 {
+	CDReader_Close(&cd_reader);
 }
 
 unsigned int retro_get_region(void)
