@@ -1268,9 +1268,9 @@ void retro_run(void)
 }
 
 #if RETRO_IS_BIG_ENDIAN
-#define NATIVE_ENDIAN RETRO_MEMDESC_BIGENDIAN
+#define MEMDESC_NATIVE_ENDIAN RETRO_MEMDESC_BIGENDIAN
 #else
-#define NATIVE_ENDIAN 0
+#define MEMDESC_NATIVE_ENDIAN 0
 #endif
 
 static void SetMemoryMaps(const unsigned char* const rom, const size_t rom_size)
@@ -1279,9 +1279,9 @@ static void SetMemoryMaps(const unsigned char* const rom, const size_t rom_size)
 	   https://github.com/RetroAchievements/rcheevos/blob/86aeb6e783e0b9f8687129d79d2e53ea92f3e5f0/src/rcheevos/consoleinfo.c#L838-L842 */
 	const struct retro_memory_descriptor descriptors[] = {
 		{RETRO_MEMDESC_CONST      | RETRO_MEMDESC_BIGENDIAN, (void*)rom,                                      0, 0x00000000, 0, 0, rom_size                                        , "ROM"    },
-		{RETRO_MEMDESC_SYSTEM_RAM | NATIVE_ENDIAN,           (void*)clownmdemu_state.m68k.ram,                0, 0x00FF0000, 0, 0, sizeof(clownmdemu_state.m68k.ram)               , "68KRAM" },
-		{RETRO_MEMDESC_SYSTEM_RAM | NATIVE_ENDIAN,           (void*)clownmdemu_state.mega_cd.prg_ram.buffer,  0, 0x80020000, 0, 0, sizeof(clownmdemu_state.mega_cd.prg_ram.buffer) , "PRGRAM" },
-		{RETRO_MEMDESC_SYSTEM_RAM | NATIVE_ENDIAN,           (void*)clownmdemu_state.mega_cd.word_ram.buffer, 0, 0x00200000, 0, 0, sizeof(clownmdemu_state.mega_cd.word_ram.buffer), "WORDRAM"},
+		{RETRO_MEMDESC_SYSTEM_RAM | MEMDESC_NATIVE_ENDIAN,   (void*)clownmdemu_state.m68k.ram,                0, 0x00FF0000, 0, 0, sizeof(clownmdemu_state.m68k.ram)               , "68KRAM" },
+		{RETRO_MEMDESC_SYSTEM_RAM | MEMDESC_NATIVE_ENDIAN,   (void*)clownmdemu_state.mega_cd.prg_ram.buffer,  0, 0x80020000, 0, 0, sizeof(clownmdemu_state.mega_cd.prg_ram.buffer) , "PRGRAM" },
+		{RETRO_MEMDESC_SYSTEM_RAM | MEMDESC_NATIVE_ENDIAN,   (void*)clownmdemu_state.mega_cd.word_ram.buffer, 0, 0x00200000, 0, 0, sizeof(clownmdemu_state.mega_cd.word_ram.buffer), "WORDRAM"},
 		{RETRO_MEMDESC_SYSTEM_RAM,                           (void*)clownmdemu_state.z80.ram,                 0, 0x00A00000, 0, 0, sizeof(clownmdemu_state.z80.ram)                , "Z80RAM" },
 	};
 
