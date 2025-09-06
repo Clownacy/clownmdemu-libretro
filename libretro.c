@@ -22,6 +22,9 @@
 
 #define SAMPLE_RATE MIXER_OUTPUT_SAMPLE_RATE
 
+#define CARTRIDGE_FILE_EXTENSIONS "bin|md|gen"
+#define CD_FILE_EXTENSIONS "cue|iso"
+
 /* Mixer data. */
 static Mixer_State mixer;
 
@@ -1061,7 +1064,7 @@ void retro_get_system_info(struct retro_system_info* const info)
 	info->library_name     = "ClownMDEmu";
 	info->library_version  = "v1.5" GIT_VERSION;
 	info->need_fullpath    = true;
-	info->valid_extensions = "bin|md|gen|cue|iso";
+	info->valid_extensions = CARTRIDGE_FILE_EXTENSIONS "|" CD_FILE_EXTENSIONS;
 	info->block_extract    = false;
 }
 
@@ -1169,11 +1172,26 @@ void retro_set_environment(const retro_environment_t environment_callback)
 		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, (void*)&desc);
 	}
 
+	/* Declare Mega CD Mode 1 subsystem. */
+	{
+		static const struct retro_subsystem_rom_info rom_info[] = {
+			{ "Cartridge", CARTRIDGE_FILE_EXTENSIONS, false, false, true, NULL, 0 },
+			{ "CD",        CD_FILE_EXTENSIONS,         true, false, true, NULL, 0 }
+		};
+
+		static const struct retro_subsystem_info info[] = {
+			{ "Mega CD Mode 1", "mcdmode1", rom_info, CC_COUNT_OF(rom_info), 0 },
+			{ NULL, NULL, NULL, 0, 0 }
+		};
+
+		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO, (void*)&info);
+	}
+
 	/* Allow Mega Drive games to be soft-patched by the frontend. */
 	{
 		static const struct retro_system_content_info_override overrides[] = {
 			{
-				"bin|md|gen",
+				CARTRIDGE_FILE_EXTENSIONS,
 				false,
 				true
 			},
@@ -1277,28 +1295,50 @@ static void SetMemoryMaps(const unsigned char* const rom, const size_t rom_size)
 
 bool retro_load_game(const struct retro_game_info* const info)
 {
-	bool success = false;
-	bool cd_boot = info->data == NULL;
+	return retro_load_game_special(0, info, 1);
+}
 
+void retro_unload_game(void)
+{
 	rom = NULL;
+	rom_size = 0;
 
-	if (cd_boot)
+	CDReader_Close(&cd_reader);
+}
+
+unsigned int retro_get_region(void)
+{
+	return pal_mode_enabled ? RETRO_REGION_PAL : RETRO_REGION_NTSC;
+}
+
+bool retro_load_game_special(const unsigned int type, const struct retro_game_info* const info, const size_t num)
+{
+	const bool cd_boot = info[0].data == NULL;
+
+	bool success = true;
+	size_t i;
+
+	if (type != 0)
+		return false;
+
+	for (i = 0; i < num; ++i)
 	{
-		/* CD. */
-		CDReader_Open(&cd_reader, NULL, info->path, &clowncd_callbacks);
-
-		if (!CDReader_SeekToSector(&cd_reader, 0))
-			CDReader_Close(&cd_reader);
+		if (info[i].data != NULL)
+		{
+			/* Cartridge. */
+			rom = (const unsigned char*)info[i].data;
+			rom_size = info[i].size;
+		}
 		else
-			success = true;
-	}
-	else
-	{
-		/* Cartridge. */
-		rom = (const unsigned char*)info->data;
-		rom_size = info->size;
+		{
+			/* CD. */
+			CDReader_Open(&cd_reader, NULL, info[i].path, &clowncd_callbacks);
 
-		success = true;
+			if (CDReader_IsOpen(&cd_reader))
+				CDReader_SeekToSector(&cd_reader, 0);
+			else
+				success = false;
+		}
 	}
 
 	if (success)
@@ -1311,26 +1351,6 @@ bool retro_load_game(const struct retro_game_info* const info)
 	}
 
 	return success;
-}
-
-void retro_unload_game(void)
-{
-	CDReader_Close(&cd_reader);
-}
-
-unsigned int retro_get_region(void)
-{
-	return pal_mode_enabled ? RETRO_REGION_PAL : RETRO_REGION_NTSC;
-}
-
-bool retro_load_game_special(const unsigned int type, const struct retro_game_info* const info, const size_t num)
-{
-	(void)type;
-	(void)info;
-	(void)num;
-
-	/* We don't need anything special. */
-	return false;
 }
 
 typedef struct SerialisedState
