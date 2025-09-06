@@ -51,7 +51,6 @@ static void (*scanline_rendered_callback)(void *user_data, const cc_u8l *source_
 static void (*fallback_colour_updated_callback)(void *user_data, cc_u16f index, cc_u16f colour);
 static void (*fallback_scanline_rendered_callback)(void *user_data, const cc_u8l *source_pixels, void *destination_pixels, cc_u16f left_boundary, cc_u16f right_boundary);
 
-static unsigned char *local_rom_buffer;
 static const unsigned char *rom;
 static size_t rom_size;
 
@@ -1279,45 +1278,27 @@ static void SetMemoryMaps(const unsigned char* const rom, const size_t rom_size)
 bool retro_load_game(const struct retro_game_info* const info)
 {
 	bool success = false;
-	bool cd_boot = false;
+	bool cd_boot = info->data == NULL;
 
-	rom = local_rom_buffer = NULL;
+	rom = NULL;
 
-	/* Initialise the ROM. */
-	if (info->data != NULL)
+	if (cd_boot)
 	{
-		/* TODO: Check if this is a Mega CD file! */
+		/* CD. */
+		CDReader_Open(&cd_reader, NULL, info->path, &clowncd_callbacks);
+
+		if (!CDReader_SeekToSector(&cd_reader, 0))
+			CDReader_Close(&cd_reader);
+		else
+			success = true;
+	}
+	else
+	{
+		/* Cartridge. */
 		rom = (const unsigned char*)info->data;
 		rom_size = info->size;
 
 		success = true;
-	}
-	else
-	{
-		CDReader_Open(&cd_reader, NULL, info->path, &clowncd_callbacks);
-
-		cd_boot = CDReader_IsMegaCDGame(&cd_reader);
-
-		if (cd_boot)
-		{
-			/* Mega CD game. */
-			if (!CDReader_SeekToSector(&cd_reader, 0))
-				CDReader_Close(&cd_reader);
-			else
-				success = true;
-		}
-		else
-		{
-			/* Mega Drive game. */
-			CDReader_Close(&cd_reader);
-
-			if (LoadFileToBuffer(info->path, &local_rom_buffer, &rom_size))
-			{
-				rom = local_rom_buffer;
-
-				success = true;
-			}
-		}
 	}
 
 	if (success)
@@ -1334,7 +1315,6 @@ bool retro_load_game(const struct retro_game_info* const info)
 
 void retro_unload_game(void)
 {
-	free(local_rom_buffer);
 }
 
 unsigned int retro_get_region(void)
