@@ -1308,8 +1308,6 @@ static bool LoadCartridge(const struct retro_game_info* const info)
 
 static bool LoadCD(const struct retro_game_info* const info)
 {
-	bool success = true;
-
 	if (info->data != NULL)
 		return false;
 
@@ -1338,7 +1336,7 @@ static bool LoadCartridgeOrCD(const struct retro_game_info* const info)
 static void UnloadCartridge(void)
 {
 	free(local_rom_buffer);
-	local_rom_buffer = rom = NULL;
+	rom = local_rom_buffer = NULL;
 	rom_size = 0;
 }
 
