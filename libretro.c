@@ -54,6 +54,7 @@ static void (*scanline_rendered_callback)(void *user_data, const cc_u8l *source_
 static void (*fallback_colour_updated_callback)(void *user_data, cc_u16f index, cc_u16f colour);
 static void (*fallback_scanline_rendered_callback)(void *user_data, const cc_u8l *source_pixels, void *destination_pixels, cc_u16f left_boundary, cc_u16f right_boundary);
 
+static unsigned char *local_rom_buffer;
 static const unsigned char *rom;
 static size_t rom_size;
 
@@ -1289,6 +1290,63 @@ static void SetMemoryMaps(const unsigned char* const rom, const size_t rom_size)
 	libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_MEMORY_MAPS, (void*)&memory_maps);
 }
 
+static bool LoadCartridge(const struct retro_game_info* const info)
+{
+	if (info->data != NULL)
+	{
+		rom = (const unsigned char*)info->data;
+		rom_size = info->size;
+	}
+	else
+	{
+		if (LoadFileToBuffer(info->path, &local_rom_buffer, &rom_size))
+			rom = local_rom_buffer;
+	}
+
+	return rom != NULL;
+}
+
+static bool LoadCD(const struct retro_game_info* const info)
+{
+	bool success = true;
+
+	if (info->data != NULL)
+		return false;
+
+	CDReader_Open(&cd_reader, NULL, info->path, &clowncd_callbacks);
+
+	if (!CDReader_IsOpen(&cd_reader))
+		return false;
+
+	CDReader_SeekToSector(&cd_reader, 0);
+	return true;
+}
+
+static bool LoadCartridgeOrCD(const struct retro_game_info* const info)
+{
+	if (LoadCD(info))
+	{
+		if (CDReader_IsMegaCDGame(&cd_reader))
+			return true;
+
+		CDReader_Close(&cd_reader);
+	}
+
+	return LoadCartridge(info);
+}
+
+static void UnloadCartridge(void)
+{
+	free(local_rom_buffer);
+	local_rom_buffer = rom = NULL;
+	rom_size = 0;
+}
+
+static void UnloadCD(void)
+{
+	CDReader_Close(&cd_reader);
+}
+
 bool retro_load_game(const struct retro_game_info* const info)
 {
 	return retro_load_game_special(0, info, 1);
@@ -1296,10 +1354,8 @@ bool retro_load_game(const struct retro_game_info* const info)
 
 void retro_unload_game(void)
 {
-	rom = NULL;
-	rom_size = 0;
-
-	CDReader_Close(&cd_reader);
+	UnloadCartridge();
+	UnloadCD();
 }
 
 unsigned int retro_get_region(void)
@@ -1309,44 +1365,42 @@ unsigned int retro_get_region(void)
 
 bool retro_load_game_special(const unsigned int type, const struct retro_game_info* const info, const size_t num)
 {
-	const bool cd_boot = info[0].data == NULL;
-
 	bool success = true;
-	size_t i;
 
 	if (type != 0)
 		return false;
 
-	for (i = 0; i < num; ++i)
+	switch (num)
 	{
-		if (info[i].data != NULL)
-		{
-			/* Cartridge. */
-			rom = (const unsigned char*)info[i].data;
-			rom_size = info[i].size;
-		}
-		else
-		{
-			/* CD. */
-			CDReader_Open(&cd_reader, NULL, info[i].path, &clowncd_callbacks);
-
-			if (CDReader_IsOpen(&cd_reader))
-				CDReader_SeekToSector(&cd_reader, 0);
-			else
+		case 1:
+			if (!LoadCartridgeOrCD(&info[0]))
 				success = false;
-		}
+			break;
+
+		case 2:
+			if (!LoadCartridge(&info[0]) || !LoadCD(&info[1]))
+				success = false;
+			break;
+
+		default:
+			success = false;
+			break;
 	}
 
-	if (success)
+	if (!success)
 	{
-		/* Provide memory descriptors to the frontend (needed for achievements, cheats, and the like). */
-		SetMemoryMaps(rom, rom_size);
-
-		/* Boot the emulated Mega Drive. */
-		ClownMDEmu_Reset(&clownmdemu, cd_boot, rom_size);
+		UnloadCartridge();
+		UnloadCD();
+		return false;
 	}
 
-	return success;
+	/* Provide memory descriptors to the frontend (needed for achievements, cheats, and the like). */
+	SetMemoryMaps(rom, rom_size);
+
+	/* Boot the emulated Mega Drive. */
+	ClownMDEmu_Reset(&clownmdemu, rom == NULL, rom_size);
+
+	return true;
 }
 
 typedef struct SerialisedState
