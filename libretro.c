@@ -33,7 +33,7 @@ static ClownMDEmu_Configuration clownmdemu_configuration;
 static ClownMDEmu_Constant clownmdemu_constant;
 static ClownMDEmu_State clownmdemu_state;
 static ClownMDEmu_Callbacks clownmdemu_callbacks;
-static const ClownMDEmu clownmdemu = CLOWNMDEMU_PARAMETERS_INITIALISE(&clownmdemu_configuration, &clownmdemu_constant, &clownmdemu_state, &clownmdemu_callbacks);
+static ClownMDEmu clownmdemu = CLOWNMDEMU_PARAMETERS_INITIALISE(&clownmdemu_configuration, &clownmdemu_constant, &clownmdemu_state, &clownmdemu_callbacks);
 
 /* Frontend data. */
 static union
@@ -54,9 +54,8 @@ static void (*scanline_rendered_callback)(void *user_data, const cc_u8l *source_
 static void (*fallback_colour_updated_callback)(void *user_data, cc_u16f index, cc_u16f colour);
 static void (*fallback_scanline_rendered_callback)(void *user_data, const cc_u8l *source_pixels, void *destination_pixels, cc_u16f left_boundary, cc_u16f right_boundary);
 
-static unsigned char *local_rom_buffer;
-static const unsigned char *rom;
-static size_t rom_size;
+static cc_u16l *rom;
+static size_t rom_length;
 
 static CDReader_State cd_reader;
 
@@ -332,26 +331,33 @@ static bool LoadFileToBuffer(const char* const path, unsigned char** const outpu
 	return success;
 }
 
+static bool CreateROMBuffer(const unsigned char* const input_buffer, const size_t input_buffer_length, cc_u16l** const output_buffer, size_t* const output_buffer_length)
+{
+	const size_t buffer_length = input_buffer_length / 2;
+
+	cc_u16l* const buffer = (cc_u16l*)malloc(buffer_length * sizeof(cc_u16l));
+
+	if (buffer == NULL)
+	{
+		return false;
+	}
+	else
+	{
+		size_t i;
+
+		for (i = 0; i < buffer_length; ++i)
+			buffer[i] = input_buffer[i * 2 + 0] << 8 | input_buffer[i * 2 + 1] << 0;
+
+		*output_buffer = buffer;
+		*output_buffer_length = buffer_length;
+
+		return true;
+	}
+}
+
 /************************/
 /* ClownMDEmu Callbacks */
 /************************/
-
-static cc_u8f CartridgeReadCallback(void* const user_data, const cc_u32f address)
-{
-	(void)user_data;
-
-	if (address >= rom_size)
-		return 0;
-	else
-		return rom[address];
-}
-
-static void CartridgeWriteCallback(void* const user_data, const cc_u32f address, const cc_u8f value)
-{
-	(void)user_data;
-	(void)address;
-	(void)value;
-}
 
 static void ColourUpdatedCallback_0RGB1555(void* const user_data, const cc_u16f index, const cc_u16f colour)
 {
@@ -1001,8 +1007,6 @@ void retro_init(void)
 
 	/* Initialise ClownMDEmu. */
 	clownmdemu_callbacks.user_data = NULL;
-	clownmdemu_callbacks.cartridge_read    = CartridgeReadCallback;
-	clownmdemu_callbacks.cartridge_written = CartridgeWriteCallback;
 	clownmdemu_callbacks.colour_updated    = ColourUpdatedCallback_0RGB1555;
 	clownmdemu_callbacks.scanline_rendered = ScanlineRenderedCallback;
 	clownmdemu_callbacks.input_requested   = InputRequestedCallback;
@@ -1191,7 +1195,7 @@ void retro_set_environment(const retro_environment_t environment_callback)
 	/* Allow Mega Drive games to be soft-patched by the frontend. */
 	{
 		static const struct retro_system_content_info_override overrides[] = {
-			{ CARTRIDGE_FILE_EXTENSIONS, false, true },
+			{ CARTRIDGE_FILE_EXTENSIONS, false, false },
 			{ NULL, false, false }
 		};
 
@@ -1234,7 +1238,7 @@ void retro_reset(void)
 {
 	const cc_bool cd_boot = CDReader_IsOpen(&cd_reader) && CDReader_IsMegaCDGame(&cd_reader);
 
-	ClownMDEmu_Reset(&clownmdemu, cd_boot, rom_size);
+	ClownMDEmu_Reset(&clownmdemu, cd_boot);
 }
 
 static void MixerCompleteCallback(void* const user_data, const cc_s16l* const audio_samples, const size_t total_frames)
@@ -1273,16 +1277,16 @@ void retro_run(void)
 #define MEMDESC_NATIVE_ENDIAN 0
 #endif
 
-static void SetMemoryMaps(const unsigned char* const rom, const size_t rom_size)
+static void SetMemoryMaps(const cc_u16l* const rom, const size_t rom_length)
 {
 	/* Does not reflect the actual memory layout, as addresses are arbitrarily defined by RetroAchievements:
 	   https://github.com/RetroAchievements/rcheevos/blob/86aeb6e783e0b9f8687129d79d2e53ea92f3e5f0/src/rcheevos/consoleinfo.c#L838-L842 */
 	const struct retro_memory_descriptor descriptors[] = {
-		{RETRO_MEMDESC_CONST      | RETRO_MEMDESC_BIGENDIAN, (void*)rom,                                      0, 0x00000000, 0, 0, rom_size                                        , "ROM"    },
-		{RETRO_MEMDESC_SYSTEM_RAM | MEMDESC_NATIVE_ENDIAN,   (void*)clownmdemu_state.m68k.ram,                0, 0x00FF0000, 0, 0, sizeof(clownmdemu_state.m68k.ram)               , "68KRAM" },
-		{RETRO_MEMDESC_SYSTEM_RAM | MEMDESC_NATIVE_ENDIAN,   (void*)clownmdemu_state.mega_cd.prg_ram.buffer,  0, 0x80020000, 0, 0, sizeof(clownmdemu_state.mega_cd.prg_ram.buffer) , "PRGRAM" },
-		{RETRO_MEMDESC_SYSTEM_RAM | MEMDESC_NATIVE_ENDIAN,   (void*)clownmdemu_state.mega_cd.word_ram.buffer, 0, 0x00200000, 0, 0, sizeof(clownmdemu_state.mega_cd.word_ram.buffer), "WORDRAM"},
-		{RETRO_MEMDESC_SYSTEM_RAM,                           (void*)clownmdemu_state.z80.ram,                 0, 0x00A00000, 0, 0, sizeof(clownmdemu_state.z80.ram)                , "Z80RAM" },
+		{RETRO_MEMDESC_CONST      | MEMDESC_NATIVE_ENDIAN, (void*)rom,                                      0, 0x00000000, 0, 0, sizeof(*rom) * rom_length                       , "ROM"    },
+		{RETRO_MEMDESC_SYSTEM_RAM | MEMDESC_NATIVE_ENDIAN, (void*)clownmdemu_state.m68k.ram,                0, 0x00FF0000, 0, 0, sizeof(clownmdemu_state.m68k.ram)               , "68KRAM" },
+		{RETRO_MEMDESC_SYSTEM_RAM | MEMDESC_NATIVE_ENDIAN, (void*)clownmdemu_state.mega_cd.prg_ram.buffer,  0, 0x80020000, 0, 0, sizeof(clownmdemu_state.mega_cd.prg_ram.buffer) , "PRGRAM" },
+		{RETRO_MEMDESC_SYSTEM_RAM | MEMDESC_NATIVE_ENDIAN, (void*)clownmdemu_state.mega_cd.word_ram.buffer, 0, 0x00200000, 0, 0, sizeof(clownmdemu_state.mega_cd.word_ram.buffer), "WORDRAM"},
+		{RETRO_MEMDESC_SYSTEM_RAM,                         (void*)clownmdemu_state.z80.ram,                 0, 0x00A00000, 0, 0, sizeof(clownmdemu_state.z80.ram)                , "Z80RAM" },
 	};
 
 	const struct retro_memory_map memory_maps = {descriptors, CC_COUNT_OF(descriptors)};
@@ -1292,18 +1296,22 @@ static void SetMemoryMaps(const unsigned char* const rom, const size_t rom_size)
 
 static bool LoadCartridge(const struct retro_game_info* const info)
 {
-	if (info->data != NULL)
+	const unsigned char *buffer = (const unsigned char*)info->data;
+	size_t buffer_size = info->size;
+
+	unsigned char *local_rom_buffer = NULL;
+
+	if (buffer == NULL && LoadFileToBuffer(info->path, &local_rom_buffer, &buffer_size))
+		buffer = local_rom_buffer;
+
+	if (buffer != NULL && CreateROMBuffer(buffer, buffer_size, &rom, &rom_length))
 	{
-		rom = (const unsigned char*)info->data;
-		rom_size = info->size;
-	}
-	else
-	{
-		if (LoadFileToBuffer(info->path, &local_rom_buffer, &rom_size))
-			rom = local_rom_buffer;
+		ClownMDEmu_SetCartridge(&clownmdemu, rom, rom_length);
+		return true;
 	}
 
-	return rom != NULL;
+	free(local_rom_buffer);
+	return false;
 }
 
 static bool LoadCD(const struct retro_game_info* const info)
@@ -1335,9 +1343,9 @@ static bool LoadCartridgeOrCD(const struct retro_game_info* const info)
 
 static void UnloadCartridge(void)
 {
-	free(local_rom_buffer);
-	rom = local_rom_buffer = NULL;
-	rom_size = 0;
+	free(rom);
+	rom = NULL;
+	rom_length = 0;
 }
 
 static void UnloadCD(void)
@@ -1393,10 +1401,10 @@ bool retro_load_game_special(const unsigned int type, const struct retro_game_in
 	}
 
 	/* Provide memory descriptors to the frontend (needed for achievements, cheats, and the like). */
-	SetMemoryMaps(rom, rom_size);
+	SetMemoryMaps(rom, rom_length);
 
 	/* Boot the emulated Mega Drive. */
-	ClownMDEmu_Reset(&clownmdemu, rom == NULL, rom_size);
+	ClownMDEmu_Reset(&clownmdemu, rom == NULL);
 
 	return true;
 }
