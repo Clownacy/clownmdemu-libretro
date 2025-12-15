@@ -496,6 +496,28 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 	},
 	{
 		/* Key. */
+		"clownmdemu_cd_addon",
+		/* Label. */
+		"Console > CD Add-on",
+		/* Categorised label. */
+		"CD Add-on",
+		/* Description. */
+		"Allow cartridge-only software to utilise features of the emulated Mega CD add-on, such as CD music. This may break some software.",
+		/* Categorised description. */
+		NULL,
+		/* Category. */
+		"console",
+		/* Values. */
+		{
+			{"enabled", NULL},
+			{"disabled", NULL},
+			{NULL, NULL},
+		},
+		/* Default value. */
+		"disabled"
+	},
+	{
+		/* Key. */
 		"clownmdemu_tall_interlace_mode_2",
 		/* Label. */
 		"Video > Tall Interlace Mode 2",
@@ -581,28 +603,6 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		},
 		/* Default value. */
 		"enabled"
-	},
-	{
-		/* Key. */
-		"clownmdemu_cd_addon",
-		/* Label. */
-		"CD Add-on",
-		/* Categorised label. */
-		NULL,
-		/* Description. */
-		"Allow cartridge-only software to utilise features of the emulated Mega CD add-on, such as CD music. This may break some software.",
-		/* Categorised description. */
-		NULL,
-		/* Category. */
-		NULL,
-		/* Values. */
-		{
-			{"enabled", NULL},
-			{"disabled", NULL},
-			{NULL, NULL},
-		},
-		/* Default value. */
-		"disabled"
 	},
 	{NULL, NULL, NULL, NULL, NULL, NULL, {{NULL, NULL}}, NULL}
 };
