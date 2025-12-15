@@ -859,6 +859,7 @@ static void UpdateOptions(const cc_bool only_update_flags)
 	clownmdemu_configuration.general.region                   =  DoOptionBoolean("clownmdemu_overseas_region", "elsewhere") ? CLOWNMDEMU_REGION_OVERSEAS : CLOWNMDEMU_REGION_DOMESTIC;
 	clownmdemu_configuration.general.tv_standard              =  pal_mode_enabled ? CLOWNMDEMU_TV_STANDARD_PAL : CLOWNMDEMU_TV_STANDARD_NTSC;
 	clownmdemu_configuration.general.low_pass_filter_disabled = !DoOptionBoolean("clownmdemu_lowpass_filter", "enabled");
+	clownmdemu_configuration.general.cd_add_on_enabled        =  DoOptionBoolean("clownmdemu_cd_addon", "enabled");
 	clownmdemu_configuration.vdp.sprites_disabled             =  DoOptionBoolean("clownmdemu_disable_sprite_plane", "enabled");
 	clownmdemu_configuration.vdp.window_disabled              =  DoOptionBoolean("clownmdemu_disable_window_plane", "enabled");
 	clownmdemu_configuration.vdp.planes_disabled[0]           =  DoOptionBoolean("clownmdemu_disable_plane_a", "enabled");
