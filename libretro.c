@@ -30,10 +30,9 @@ static Mixer_State mixer;
 
 /* ClownMDEmu data. */
 static ClownMDEmu_Configuration clownmdemu_configuration;
-static ClownMDEmu_Constant clownmdemu_constant;
 static ClownMDEmu_State clownmdemu_state;
 static ClownMDEmu_Callbacks clownmdemu_callbacks;
-static ClownMDEmu clownmdemu = CLOWNMDEMU_PARAMETERS_INITIALISE(&clownmdemu_configuration, &clownmdemu_constant, &clownmdemu_state, &clownmdemu_callbacks);
+static ClownMDEmu clownmdemu = CLOWNMDEMU_PARAMETERS_INITIALISE(&clownmdemu_configuration, &clownmdemu_state, &clownmdemu_callbacks);
 
 /* Frontend data. */
 static union
@@ -1031,7 +1030,7 @@ void retro_init(void)
 	ClownCD_SetErrorCallback(ClownCDLog, NULL);
 	ClownMDEmu_SetLogCallback(ClownMDEmuLog, NULL);
 
-	ClownMDEmu_Constant_Initialise(&clownmdemu_constant);
+	ClownMDEmu_Constant_Initialise();
 	ClownMDEmu_State_Initialise(&clownmdemu_state);
 
 	/* Initialise the mixer. */
@@ -1236,9 +1235,7 @@ void retro_set_video_refresh(const retro_video_refresh_t video_callback)
 
 void retro_reset(void)
 {
-	const cc_bool cd_boot = CDReader_IsOpen(&cd_reader) && CDReader_IsMegaCDGame(&cd_reader);
-
-	ClownMDEmu_Reset(&clownmdemu, cd_boot);
+	ClownMDEmu_Reset(&clownmdemu, rom != NULL, CDReader_IsOpen(&cd_reader));
 }
 
 static void MixerCompleteCallback(void* const user_data, const cc_s16l* const audio_samples, const size_t total_frames)
@@ -1404,7 +1401,7 @@ bool retro_load_game_special(const unsigned int type, const struct retro_game_in
 	SetMemoryMaps(rom, rom_length);
 
 	/* Boot the emulated Mega Drive. */
-	ClownMDEmu_Reset(&clownmdemu, rom == NULL);
+	retro_reset();
 
 	return true;
 }
