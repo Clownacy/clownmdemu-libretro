@@ -60,6 +60,30 @@ struct retro_core_option_v2_category option_cats_us[] = {
 		/* Description. */
 		"Unusual options that are intended for debugging."
 	},
+	{
+		/* Key. */
+		"console",
+		/* Label. */
+		"Console",
+		/* Description. */
+		"Options related to the emulated console."
+	},
+	{
+		/* Key. */
+		"video",
+		/* Label. */
+		"Video",
+		/* Description. */
+		"Options related to graphical operations."
+	},
+	{
+		/* Key. */
+		"audio",
+		/* Label. */
+		"Audio",
+		/* Description. */
+		"Options related to sound operations."
+	},
 	{NULL, NULL, NULL}
 };
 
@@ -430,15 +454,15 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		/* Key. */
 		"clownmdemu_tv_standard",
 		/* Label. */
-		"TV Standard",
+		"Console > TV Standard",
 		/* Categorised label. */
-		NULL,
+		"TV Standard",
 		/* Description. */
 		"Which television standard to output in.",
 		/* Categorised description. */
 		NULL,
 		/* Category. */
-		NULL,
+		"console",
 		/* Values. */
 		{
 			{"pal", "PAL (50Hz)"},
@@ -452,15 +476,15 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		/* Key. */
 		"clownmdemu_overseas_region",
 		/* Label. */
-		"Console Region",
+		"Console > Region",
 		/* Categorised label. */
-		NULL,
+		"Region",
 		/* Description. */
 		"Which region the console is.",
 		/* Categorised description. */
 		NULL,
 		/* Category. */
-		NULL,
+		"console",
 		/* Values. */
 		{
 			{"elsewhere", "Overseas (Elsewhere)"},
@@ -474,15 +498,15 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		/* Key. */
 		"clownmdemu_tall_interlace_mode_2",
 		/* Label. */
-		"Tall Interlace Mode 2",
+		"Video > Tall Interlace Mode 2",
 		/* Categorised label. */
-		NULL,
+		"Tall Interlace Mode 2",
 		/* Description. */
 		"Makes games that use Interlace Mode 2 for split-screen not appear squashed.",
 		/* Categorised description. */
 		NULL,
 		/* Category. */
-		NULL,
+		"video",
 		/* Values. */
 		{
 			{"enabled", NULL},
@@ -496,15 +520,15 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		/* Key. */
 		"clownmdemu_widescreen",
 		/* Label. */
-		"Widescreen Hack",
+		"Video > Widescreen Hack",
 		/* Categorised label. */
-		NULL,
+		"Widescreen Hack",
 		/* Description. */
 		"Widens the display. Works well with some games, badly with others.",
 		/* Categorised description. */
 		NULL,
 		/* Category. */
-		NULL,
+		"video",
 		/* Values. */
 		{
 			{"enabled", NULL},
@@ -518,15 +542,15 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		/* Key. */
 		"clownmdemu_lowpass_filter",
 		/* Label. */
-		"Low-Pass Filter",
+		"Audio > Low-Pass Filter",
 		/* Categorised label. */
-		NULL,
+		"Low-Pass Filter",
 		/* Description. */
 		"Makes the audio sound 'softer', just like on a real Mega Drive.",
 		/* Categorised description. */
 		NULL,
 		/* Category. */
-		NULL,
+		"audio",
 		/* Values. */
 		{
 			{"enabled", NULL},
@@ -540,15 +564,15 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		/* Key. */
 		"clownmdemu_ladder_effect",
 		/* Label. */
-		"Low-Volume Distortion",
+		"Audio > Low-Volume Distortion",
 		/* Categorised label. */
-		NULL,
+		"Low-Volume Distortion",
 		/* Description. */
 		"Approximates the so-called 'ladder effect' that is present in early Mega Drives. Without this, certain sounds in some games will be too quiet.",
 		/* Categorised description. */
 		NULL,
 		/* Category. */
-		NULL,
+		"audio",
 		/* Values. */
 		{
 			{"enabled", NULL},
