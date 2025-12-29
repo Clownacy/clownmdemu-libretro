@@ -20,8 +20,6 @@
 #define FRAMEBUFFER_WIDTH VDP_MAX_SCANLINE_WIDTH
 #define FRAMEBUFFER_HEIGHT VDP_MAX_SCANLINES
 
-#define SAMPLE_RATE MIXER_OUTPUT_SAMPLE_RATE
-
 #define CARTRIDGE_FILE_EXTENSIONS "bin|md|gen"
 #define CD_FILE_EXTENSIONS "cue|iso"
 
@@ -1108,7 +1106,7 @@ void retro_get_system_av_info(struct retro_system_av_info* const info)
 	Geometry_Export(&info->geometry);
 
 	info->timing.fps = pal_mode_enabled ? CLOWNMDEMU_MULTIPLY_BY_PAL_FRAMERATE(1.0) : CLOWNMDEMU_MULTIPLY_BY_NTSC_FRAMERATE(1.0);	/* Standard PAL and NTSC framerates. */
-	info->timing.sample_rate = (double)SAMPLE_RATE;
+	info->timing.sample_rate = pal_mode_enabled ? MIXER_OUTPUT_SAMPLE_RATE_PAL : MIXER_OUTPUT_SAMPLE_RATE_NTSC;
 }
 
 void retro_set_environment(const retro_environment_t environment_callback)
