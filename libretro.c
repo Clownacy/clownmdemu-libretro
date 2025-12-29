@@ -89,7 +89,7 @@ static void Geometry_Export(struct retro_game_geometry* const output)
 	output->base_height  = geometry.current_screen_height;
 	output->max_width    = FRAMEBUFFER_WIDTH;
 	output->max_height   = FRAMEBUFFER_HEIGHT;
-	output->aspect_ratio = (clownmdemu_configuration.vdp.widescreen_enabled ? 400.0f : 320.0f) / (float)geometry.current_screen_height;
+	output->aspect_ratio = (320 + clownmdemu_configuration.vdp.widescreen_tile_pairs * VDP_TILE_PAIR_WIDTH * 2) / (float)geometry.current_screen_height;
 
 	/* Squish the aspect ratio vertically when in Interlace Mode 2. */
 	if (!geometry.tall_interlace_mode_2 && geometry.current_screen_height >= 448)
@@ -834,6 +834,17 @@ static cc_bool DoOptionBoolean(const char* const key, const char* const true_val
 	return libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_VARIABLE, &variable) && variable.value != NULL && strcmp(variable.value, true_value) == 0;
 }
 
+static int DoOptionNumerical(const char* const key)
+{
+	struct retro_variable variable;
+
+	variable.key = key;
+	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_VARIABLE, &variable) && variable.value != NULL)
+		return atoi(variable.value);
+
+	return 0;
+}
+
 static void UpdateOptions(const cc_bool only_update_flags)
 {
 	const cc_bool pal_mode_changed = pal_mode_enabled != DoOptionBoolean("clownmdemu_tv_standard", "pal");
@@ -862,7 +873,7 @@ static void UpdateOptions(const cc_bool only_update_flags)
 	clownmdemu_configuration.vdp.window_disabled              =  DoOptionBoolean("clownmdemu_disable_window_plane", "enabled");
 	clownmdemu_configuration.vdp.planes_disabled[0]           =  DoOptionBoolean("clownmdemu_disable_plane_a", "enabled");
 	clownmdemu_configuration.vdp.planes_disabled[1]           =  DoOptionBoolean("clownmdemu_disable_plane_b", "enabled");
-	clownmdemu_configuration.vdp.widescreen_enabled           =  DoOptionBoolean("clownmdemu_widescreen", "enabled");
+	clownmdemu_configuration.vdp.widescreen_tile_pairs        =  DoOptionNumerical("clownmdemu_widescreen_tile_pairs");
 	clownmdemu_configuration.fm.fm_channels_disabled[0]       =  DoOptionBoolean("clownmdemu_disable_fm1", "enabled");
 	clownmdemu_configuration.fm.fm_channels_disabled[1]       =  DoOptionBoolean("clownmdemu_disable_fm2", "enabled");
 	clownmdemu_configuration.fm.fm_channels_disabled[2]       =  DoOptionBoolean("clownmdemu_disable_fm3", "enabled");
