@@ -1435,7 +1435,7 @@ bool retro_serialize(void* const data, const size_t size)
 	(void)size;
 
 	ClownMDEmu_SaveState(&clownmdemu, &serialised_state->clownmdemu);
-	CDReader_GetStateBackup(&cd_reader, &serialised_state->cd_reader);
+	CDReader_SaveState(&cd_reader, &serialised_state->cd_reader);
 	return true;
 }
 
@@ -1446,7 +1446,7 @@ bool retro_unserialize(const void* const data, const size_t size)
 	(void)size;
 
 	ClownMDEmu_LoadState(&clownmdemu, &serialised_state->clownmdemu);
-	CDReader_SetStateBackup(&cd_reader, &serialised_state->cd_reader);
+	CDReader_LoadState(&cd_reader, &serialised_state->cd_reader);
 	return true;
 }
 
