@@ -1038,7 +1038,7 @@ void retro_init(void)
 
 	ClownMDEmu_Constant_Initialise();
 	{
-		ClownMDEmu_InitialConfiguration configuration = {};
+		ClownMDEmu_InitialConfiguration configuration = {0};
 		ClownMDEmu_Initialise(&clownmdemu, &configuration, &clownmdemu_callbacks);
 	}
 
