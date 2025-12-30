@@ -103,7 +103,7 @@ static void Geometry_Update(void)
 		{
 			struct retro_game_geometry geometry;
 			Geometry_Export(&geometry);
-			libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
+			libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_GEOMETRY, (void*)&geometry);
 		}
 	}
 }
@@ -265,7 +265,7 @@ static void LoadFileIOCallbacks(void)
 
 	info.required_interface_version = 1;
 
-	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &info))
+	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, (void*)&info))
 	{
 		File_Open    = info.iface->open;
 		File_Close   = info.iface->close;
@@ -434,7 +434,7 @@ static void ScanlineRenderedCallback(void* const user_data, const cc_u16f scanli
 		frontend_framebuffer.height = screen_height;
 		frontend_framebuffer.access_flags = RETRO_MEMORY_ACCESS_WRITE;
 
-		if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_CURRENT_SOFTWARE_FRAMEBUFFER, &frontend_framebuffer)
+		if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_CURRENT_SOFTWARE_FRAMEBUFFER, (void*)&frontend_framebuffer)
 		&& (frontend_framebuffer.format == RETRO_PIXEL_FORMAT_0RGB1555
 		 || frontend_framebuffer.format == RETRO_PIXEL_FORMAT_XRGB8888
 		 || frontend_framebuffer.format == RETRO_PIXEL_FORMAT_RGB565))
@@ -635,10 +635,10 @@ static const char* GetBuRAMDirectory(void)
 {
 	const char *path;
 
-	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &path))
+	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, (void*)&path))
 		return path;
 
-	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &path))
+	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, (void*)&path))
 		return path;
 
 	return "";
@@ -829,7 +829,7 @@ static cc_bool DoOptionBoolean(const char* const key, const char* const true_val
 {
 	struct retro_variable variable;
 	variable.key = key;
-	return libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_VARIABLE, &variable) && variable.value != NULL && strcmp(variable.value, true_value) == 0;
+	return libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_VARIABLE, (void*)&variable) && variable.value != NULL && strcmp(variable.value, true_value) == 0;
 }
 
 static int DoOptionNumerical(const char* const key)
@@ -837,7 +837,7 @@ static int DoOptionNumerical(const char* const key)
 	struct retro_variable variable;
 
 	variable.key = key;
-	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_VARIABLE, &variable) && variable.value != NULL)
+	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_VARIABLE, (void*)&variable) && variable.value != NULL)
 		return atoi(variable.value);
 
 	return 0;
@@ -857,7 +857,7 @@ static void UpdateOptions(const cc_bool only_update_flags)
 		{
 			struct retro_system_av_info info;
 			retro_get_system_av_info(&info);
-			libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &info);
+			libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, (void*)&info);
 		}
 	}
 
@@ -1009,7 +1009,7 @@ void retro_init(void)
 	/* Inform frontend of serialisation quirks. */
 	{
 		uint64_t serialisation_quirks = RETRO_SERIALIZATION_QUIRK_ENDIAN_DEPENDENT | RETRO_SERIALIZATION_QUIRK_PLATFORM_DEPENDENT;
-		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS, &serialisation_quirks);
+		libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS, (void*)&serialisation_quirks);
 	}
 
 	/* Initialise ClownMDEmu. */
@@ -1092,7 +1092,7 @@ void retro_get_system_av_info(struct retro_system_av_info* const info)
 	   'RETRO_ENVIRONMENT_GET_CURRENT_SOFTWARE_FRAMEBUFFER' fails or produces a framebuffer
 	   that is in a format that we don't support. */
 	pixel_format = RETRO_PIXEL_FORMAT_RGB565;
-	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &pixel_format))
+	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, (void*)&pixel_format))
 	{
 		fallback_colour_updated_callback = ColourUpdatedCallback_RGB565;
 		fallback_scanline_rendered_callback = ScanlineRenderedCallback_16Bit;
@@ -1100,7 +1100,7 @@ void retro_get_system_av_info(struct retro_system_av_info* const info)
 	else
 	{
 		pixel_format = RETRO_PIXEL_FORMAT_XRGB8888;
-		if (libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &pixel_format))
+		if (libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, (void*)&pixel_format))
 		{
 			fallback_colour_updated_callback = ColourUpdatedCallback_XRGB8888;
 			fallback_scanline_rendered_callback = ScanlineRenderedCallback_32Bit;
@@ -1132,7 +1132,7 @@ void retro_set_environment(const retro_environment_t environment_callback)
 	/* Retrieve a log callback from the frontend. */
 	{
 		struct retro_log_callback logging;
-		if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &logging) && logging.log != NULL)
+		if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, (void*)&logging) && logging.log != NULL)
 			libretro_callbacks.log = logging.log;
 		else
 			libretro_callbacks.log = FallbackErrorLogCallback;
@@ -1262,7 +1262,7 @@ void retro_run(void)
 	bool options_updated;
 
 	/* Refresh options if they've been updated. */
-	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &options_updated) && options_updated)
+	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, (void*)&options_updated) && options_updated)
 		UpdateOptions(cc_false);
 
 	/* Poll inputs. */
