@@ -87,7 +87,7 @@ static void Geometry_Export(struct retro_game_geometry* const output)
 	output->base_height  = geometry.current_screen_height;
 	output->max_width    = FRAMEBUFFER_WIDTH;
 	output->max_height   = FRAMEBUFFER_HEIGHT;
-	output->aspect_ratio = (320 + clownmdemu.vdp.configuration.widescreen_tile_pairs * VDP_TILE_PAIR_WIDTH * 2) / (float)geometry.current_screen_height;
+	output->aspect_ratio = ((VDP_H40_SCREEN_WIDTH_IN_TILE_PAIRS + clownmdemu.vdp.configuration.widescreen_tile_pairs * 2) * VDP_TILE_PAIR_WIDTH) / (float)geometry.current_screen_height;
 
 	/* Squish the aspect ratio vertically when in Interlace Mode 2. */
 	if (!geometry.tall_interlace_mode_2 && geometry.current_screen_height >= 448)
