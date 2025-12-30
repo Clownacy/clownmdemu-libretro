@@ -1038,7 +1038,8 @@ void retro_init(void)
 
 	ClownMDEmu_Constant_Initialise();
 	{
-		ClownMDEmu_InitialConfiguration configuration = {0};
+		ClownMDEmu_InitialConfiguration configuration;
+		memset(&configuration, 0, sizeof(configuration));
 		ClownMDEmu_Initialise(&clownmdemu, &configuration, &clownmdemu_callbacks);
 	}
 
@@ -1289,15 +1290,21 @@ static void SetMemoryMaps(const cc_u16l* const rom, const size_t rom_length)
 {
 	/* Does not reflect the actual memory layout, as addresses are arbitrarily defined by RetroAchievements:
 	   https://github.com/RetroAchievements/rcheevos/blob/86aeb6e783e0b9f8687129d79d2e53ea92f3e5f0/src/rcheevos/consoleinfo.c#L838-L842 */
-	const struct retro_memory_descriptor descriptors[] = {
-		{RETRO_MEMDESC_CONST      | MEMDESC_NATIVE_ENDIAN, (void*)rom,                                      0, 0x00000000, 0, 0, sizeof(*rom) * rom_length                       , "ROM"    },
+	struct retro_memory_descriptor descriptors[] = {
+		{RETRO_MEMDESC_CONST      | MEMDESC_NATIVE_ENDIAN, (void*)0,                                        0, 0x00000000, 0, 0, 0                                               , "ROM"    },
 		{RETRO_MEMDESC_SYSTEM_RAM | MEMDESC_NATIVE_ENDIAN, (void*)clownmdemu.state.m68k.ram,                0, 0x00FF0000, 0, 0, sizeof(clownmdemu.state.m68k.ram)               , "68KRAM" },
 		{RETRO_MEMDESC_SYSTEM_RAM | MEMDESC_NATIVE_ENDIAN, (void*)clownmdemu.state.mega_cd.prg_ram.buffer,  0, 0x80020000, 0, 0, sizeof(clownmdemu.state.mega_cd.prg_ram.buffer) , "PRGRAM" },
 		{RETRO_MEMDESC_SYSTEM_RAM | MEMDESC_NATIVE_ENDIAN, (void*)clownmdemu.state.mega_cd.word_ram.buffer, 0, 0x00200000, 0, 0, sizeof(clownmdemu.state.mega_cd.word_ram.buffer), "WORDRAM"},
 		{RETRO_MEMDESC_SYSTEM_RAM,                         (void*)clownmdemu.state.z80.ram,                 0, 0x00A00000, 0, 0, sizeof(clownmdemu.state.z80.ram)                , "Z80RAM" },
 	};
 
-	const struct retro_memory_map memory_maps = {descriptors, CC_COUNT_OF(descriptors)};
+	struct retro_memory_map memory_maps;
+
+	memory_maps.descriptors = descriptors;
+	memory_maps.num_descriptors = CC_COUNT_OF(descriptors);
+
+	descriptors[0].ptr = (void*)rom;
+	descriptors[0].len = sizeof(*rom) * rom_length;
 
 	libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_MEMORY_MAPS, (void*)&memory_maps);
 }
