@@ -90,7 +90,7 @@ static void Geometry_Export(struct retro_game_geometry* const output)
 	output->aspect_ratio = ((VDP_H40_SCREEN_WIDTH_IN_TILE_PAIRS + clownmdemu.vdp.configuration.widescreen_tile_pairs * 2) * VDP_TILE_PAIR_WIDTH) / (float)geometry.current_screen_height;
 
 	/* Squish the aspect ratio vertically when in Interlace Mode 2. */
-	if (!geometry.tall_interlace_mode_2 && geometry.current_screen_height >= 448)
+	if (!geometry.tall_interlace_mode_2 && geometry.current_screen_height >= VDP_V28_SCANLINES_IN_TILES * VDP_INTERLACE_MODE_2_TILE_HEIGHT)
 		output->aspect_ratio *= 2.0f;
 }
 
@@ -1112,7 +1112,7 @@ void retro_get_system_av_info(struct retro_system_av_info* const info)
 	}
 
 	/* Initialise these to avoid a division by 0 in Geometry_Export. */
-	Geometry_SetScreenSize(320, 224);
+	Geometry_SetScreenSize(VDP_H40_SCREEN_WIDTH_IN_TILE_PAIRS * VDP_TILE_PAIR_WIDTH, VDP_V28_SCANLINES_IN_TILES * VDP_STANDARD_TILE_HEIGHT);
 
 	/* Populate the 'retro_system_av_info' struct. */
 	Geometry_Export(&info->geometry);
