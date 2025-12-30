@@ -27,10 +27,8 @@
 static Mixer_State mixer;
 
 /* ClownMDEmu data. */
-static ClownMDEmu_Configuration clownmdemu_configuration;
-static ClownMDEmu_State clownmdemu_state;
 static ClownMDEmu_Callbacks clownmdemu_callbacks;
-static ClownMDEmu clownmdemu = CLOWNMDEMU_PARAMETERS_INITIALISE(&clownmdemu_configuration, &clownmdemu_state, &clownmdemu_callbacks);
+static ClownMDEmu clownmdemu;
 
 /* Frontend data. */
 static union
@@ -89,7 +87,7 @@ static void Geometry_Export(struct retro_game_geometry* const output)
 	output->base_height  = geometry.current_screen_height;
 	output->max_width    = FRAMEBUFFER_WIDTH;
 	output->max_height   = FRAMEBUFFER_HEIGHT;
-	output->aspect_ratio = (320 + clownmdemu_configuration.vdp.widescreen_tile_pairs * VDP_TILE_PAIR_WIDTH * 2) / (float)geometry.current_screen_height;
+	output->aspect_ratio = (320 + clownmdemu.vdp.configuration.widescreen_tile_pairs * VDP_TILE_PAIR_WIDTH * 2) / (float)geometry.current_screen_height;
 
 	/* Squish the aspect ratio vertically when in Interlace Mode 2. */
 	if (!geometry.tall_interlace_mode_2 && geometry.current_screen_height >= 448)
@@ -556,28 +554,28 @@ static cc_bool InputRequestedCallback(void* const user_data, const cc_u8f player
 	return libretro_callbacks.input_state(player_id, RETRO_DEVICE_JOYPAD, 0, libretro_button_id);
 }
 
-static void FMAudioToBeGeneratedCallback(void* const user_data, const ClownMDEmu* const clownmdemu, const size_t total_frames, void (* const generate_fm_audio)(const ClownMDEmu *clownmdemu, cc_s16l *sample_buffer, size_t total_frames))
+static void FMAudioToBeGeneratedCallback(void* const user_data, ClownMDEmu* const clownmdemu, const size_t total_frames, void (* const generate_fm_audio)(ClownMDEmu *clownmdemu, cc_s16l *sample_buffer, size_t total_frames))
 {
 	(void)user_data;
 
 	generate_fm_audio(clownmdemu, Mixer_AllocateFMSamples(&mixer, total_frames), total_frames);
 }
 
-static void PSGAudioToBeGeneratedCallback(void* const user_data, const ClownMDEmu* const clownmdemu, const size_t total_samples, void (* const generate_psg_audio)(const ClownMDEmu *clownmdemu, cc_s16l *sample_buffer, size_t total_samples))
+static void PSGAudioToBeGeneratedCallback(void* const user_data, ClownMDEmu* const clownmdemu, const size_t total_samples, void (* const generate_psg_audio)(ClownMDEmu *clownmdemu, cc_s16l *sample_buffer, size_t total_samples))
 {
 	(void)user_data;
 
 	generate_psg_audio(clownmdemu, Mixer_AllocatePSGSamples(&mixer, total_samples), total_samples);
 }
 
-static void PCMAudioToBeGeneratedCallback(void* const user_data, const ClownMDEmu* const clownmdemu, const size_t total_frames, void (* const generate_pcm_audio)(const ClownMDEmu *clownmdemu, cc_s16l *sample_buffer, size_t total_frames))
+static void PCMAudioToBeGeneratedCallback(void* const user_data, ClownMDEmu* const clownmdemu, const size_t total_frames, void (* const generate_pcm_audio)(ClownMDEmu *clownmdemu, cc_s16l *sample_buffer, size_t total_frames))
 {
 	(void)user_data;
 
 	generate_pcm_audio(clownmdemu, Mixer_AllocatePCMSamples(&mixer, total_frames), total_frames);
 }
 
-static void CDDAAudioToBeGeneratedCallback(void* const user_data, const ClownMDEmu* const clownmdemu, const size_t total_frames, void (* const generate_cdda_audio)(const ClownMDEmu *clownmdemu, cc_s16l *sample_buffer, size_t total_frames))
+static void CDDAAudioToBeGeneratedCallback(void* const user_data, ClownMDEmu* const clownmdemu, const size_t total_frames, void (* const generate_cdda_audio)(ClownMDEmu *clownmdemu, cc_s16l *sample_buffer, size_t total_frames))
 {
 	(void)user_data;
 
@@ -865,35 +863,35 @@ static void UpdateOptions(const cc_bool only_update_flags)
 
 	Geometry_SetTallInterlaceMode2(DoOptionBoolean("clownmdemu_tall_interlace_mode_2", "enabled"));
 
-	clownmdemu_configuration.general.region                   =  DoOptionBoolean("clownmdemu_overseas_region", "elsewhere") ? CLOWNMDEMU_REGION_OVERSEAS : CLOWNMDEMU_REGION_DOMESTIC;
-	clownmdemu_configuration.general.tv_standard              =  pal_mode_enabled ? CLOWNMDEMU_TV_STANDARD_PAL : CLOWNMDEMU_TV_STANDARD_NTSC;
-	clownmdemu_configuration.general.low_pass_filter_disabled = !DoOptionBoolean("clownmdemu_lowpass_filter", "enabled");
-	clownmdemu_configuration.general.cd_add_on_enabled        =  DoOptionBoolean("clownmdemu_cd_addon", "enabled");
-	clownmdemu_configuration.vdp.sprites_disabled             =  DoOptionBoolean("clownmdemu_disable_sprite_plane", "enabled");
-	clownmdemu_configuration.vdp.window_disabled              =  DoOptionBoolean("clownmdemu_disable_window_plane", "enabled");
-	clownmdemu_configuration.vdp.planes_disabled[0]           =  DoOptionBoolean("clownmdemu_disable_plane_a", "enabled");
-	clownmdemu_configuration.vdp.planes_disabled[1]           =  DoOptionBoolean("clownmdemu_disable_plane_b", "enabled");
-	clownmdemu_configuration.vdp.widescreen_tile_pairs        =  DoOptionNumerical("clownmdemu_widescreen_tile_pairs");
-	clownmdemu_configuration.fm.fm_channels_disabled[0]       =  DoOptionBoolean("clownmdemu_disable_fm1", "enabled");
-	clownmdemu_configuration.fm.fm_channels_disabled[1]       =  DoOptionBoolean("clownmdemu_disable_fm2", "enabled");
-	clownmdemu_configuration.fm.fm_channels_disabled[2]       =  DoOptionBoolean("clownmdemu_disable_fm3", "enabled");
-	clownmdemu_configuration.fm.fm_channels_disabled[3]       =  DoOptionBoolean("clownmdemu_disable_fm4", "enabled");
-	clownmdemu_configuration.fm.fm_channels_disabled[4]       =  DoOptionBoolean("clownmdemu_disable_fm5", "enabled");
-	clownmdemu_configuration.fm.fm_channels_disabled[5]       =  DoOptionBoolean("clownmdemu_disable_fm6", "enabled");
-	clownmdemu_configuration.fm.dac_channel_disabled          =  DoOptionBoolean("clownmdemu_disable_dac", "enabled");
-	clownmdemu_configuration.fm.ladder_effect_disabled        = !DoOptionBoolean("clownmdemu_ladder_effect", "enabled");
-	clownmdemu_configuration.psg.tone_disabled[0]             =  DoOptionBoolean("clownmdemu_disable_psg1", "enabled");
-	clownmdemu_configuration.psg.tone_disabled[1]             =  DoOptionBoolean("clownmdemu_disable_psg2", "enabled");
-	clownmdemu_configuration.psg.tone_disabled[2]             =  DoOptionBoolean("clownmdemu_disable_psg3", "enabled");
-	clownmdemu_configuration.psg.noise_disabled               =  DoOptionBoolean("clownmdemu_disable_psg_noise", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[0]         =  DoOptionBoolean("clownmdemu_disable_pcm1", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[1]         =  DoOptionBoolean("clownmdemu_disable_pcm2", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[2]         =  DoOptionBoolean("clownmdemu_disable_pcm3", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[3]         =  DoOptionBoolean("clownmdemu_disable_pcm4", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[4]         =  DoOptionBoolean("clownmdemu_disable_pcm5", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[5]         =  DoOptionBoolean("clownmdemu_disable_pcm6", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[6]         =  DoOptionBoolean("clownmdemu_disable_pcm7", "enabled");
-	clownmdemu_configuration.pcm.channels_disabled[7]         =  DoOptionBoolean("clownmdemu_disable_pcm8", "enabled");
+	clownmdemu.configuration.region                           =  DoOptionBoolean("clownmdemu_overseas_region", "elsewhere") ? CLOWNMDEMU_REGION_OVERSEAS : CLOWNMDEMU_REGION_DOMESTIC;
+	clownmdemu.configuration.tv_standard                      =  pal_mode_enabled ? CLOWNMDEMU_TV_STANDARD_PAL : CLOWNMDEMU_TV_STANDARD_NTSC;
+	clownmdemu.configuration.low_pass_filter_disabled         = !DoOptionBoolean("clownmdemu_lowpass_filter", "enabled");
+	clownmdemu.configuration.cd_add_on_enabled                =  DoOptionBoolean("clownmdemu_cd_addon", "enabled");
+	clownmdemu.vdp.configuration.sprites_disabled             =  DoOptionBoolean("clownmdemu_disable_sprite_plane", "enabled");
+	clownmdemu.vdp.configuration.window_disabled              =  DoOptionBoolean("clownmdemu_disable_window_plane", "enabled");
+	clownmdemu.vdp.configuration.planes_disabled[0]           =  DoOptionBoolean("clownmdemu_disable_plane_a", "enabled");
+	clownmdemu.vdp.configuration.planes_disabled[1]           =  DoOptionBoolean("clownmdemu_disable_plane_b", "enabled");
+	clownmdemu.vdp.configuration.widescreen_tile_pairs        =  DoOptionNumerical("clownmdemu_widescreen_tile_pairs");
+	clownmdemu.fm.configuration.fm_channels_disabled[0]       =  DoOptionBoolean("clownmdemu_disable_fm1", "enabled");
+	clownmdemu.fm.configuration.fm_channels_disabled[1]       =  DoOptionBoolean("clownmdemu_disable_fm2", "enabled");
+	clownmdemu.fm.configuration.fm_channels_disabled[2]       =  DoOptionBoolean("clownmdemu_disable_fm3", "enabled");
+	clownmdemu.fm.configuration.fm_channels_disabled[3]       =  DoOptionBoolean("clownmdemu_disable_fm4", "enabled");
+	clownmdemu.fm.configuration.fm_channels_disabled[4]       =  DoOptionBoolean("clownmdemu_disable_fm5", "enabled");
+	clownmdemu.fm.configuration.fm_channels_disabled[5]       =  DoOptionBoolean("clownmdemu_disable_fm6", "enabled");
+	clownmdemu.fm.configuration.dac_channel_disabled          =  DoOptionBoolean("clownmdemu_disable_dac", "enabled");
+	clownmdemu.fm.configuration.ladder_effect_disabled        = !DoOptionBoolean("clownmdemu_ladder_effect", "enabled");
+	clownmdemu.psg.configuration.tone_disabled[0]             =  DoOptionBoolean("clownmdemu_disable_psg1", "enabled");
+	clownmdemu.psg.configuration.tone_disabled[1]             =  DoOptionBoolean("clownmdemu_disable_psg2", "enabled");
+	clownmdemu.psg.configuration.tone_disabled[2]             =  DoOptionBoolean("clownmdemu_disable_psg3", "enabled");
+	clownmdemu.psg.configuration.noise_disabled               =  DoOptionBoolean("clownmdemu_disable_psg_noise", "enabled");
+	clownmdemu.mega_cd.pcm.configuration.channels_disabled[0] =  DoOptionBoolean("clownmdemu_disable_pcm1", "enabled");
+	clownmdemu.mega_cd.pcm.configuration.channels_disabled[1] =  DoOptionBoolean("clownmdemu_disable_pcm2", "enabled");
+	clownmdemu.mega_cd.pcm.configuration.channels_disabled[2] =  DoOptionBoolean("clownmdemu_disable_pcm3", "enabled");
+	clownmdemu.mega_cd.pcm.configuration.channels_disabled[3] =  DoOptionBoolean("clownmdemu_disable_pcm4", "enabled");
+	clownmdemu.mega_cd.pcm.configuration.channels_disabled[4] =  DoOptionBoolean("clownmdemu_disable_pcm5", "enabled");
+	clownmdemu.mega_cd.pcm.configuration.channels_disabled[5] =  DoOptionBoolean("clownmdemu_disable_pcm6", "enabled");
+	clownmdemu.mega_cd.pcm.configuration.channels_disabled[6] =  DoOptionBoolean("clownmdemu_disable_pcm7", "enabled");
+	clownmdemu.mega_cd.pcm.configuration.channels_disabled[7] =  DoOptionBoolean("clownmdemu_disable_pcm8", "enabled");
 }
 
 /************************/
@@ -1035,13 +1033,16 @@ void retro_init(void)
 	clownmdemu_callbacks.save_file_removed            = SaveFileRemovedCallback;
 	clownmdemu_callbacks.save_file_size_obtained      = SaveFileSizeObtainedCallback;
 
-	UpdateOptions(cc_true);
-
 	ClownCD_SetErrorCallback(ClownCDLog, NULL);
 	ClownMDEmu_SetLogCallback(ClownMDEmuLog, NULL);
 
 	ClownMDEmu_Constant_Initialise();
-	ClownMDEmu_State_Initialise(&clownmdemu_state);
+	{
+		ClownMDEmu_InitialConfiguration configuration = {};
+		ClownMDEmu_Initialise(&clownmdemu, &configuration, &clownmdemu_callbacks);
+	}
+
+	UpdateOptions(cc_true);
 
 	/* Initialise the mixer. */
 	Mixer_Initialise(&mixer, pal_mode_enabled);
@@ -1290,10 +1291,10 @@ static void SetMemoryMaps(const cc_u16l* const rom, const size_t rom_length)
 	   https://github.com/RetroAchievements/rcheevos/blob/86aeb6e783e0b9f8687129d79d2e53ea92f3e5f0/src/rcheevos/consoleinfo.c#L838-L842 */
 	const struct retro_memory_descriptor descriptors[] = {
 		{RETRO_MEMDESC_CONST      | MEMDESC_NATIVE_ENDIAN, (void*)rom,                                      0, 0x00000000, 0, 0, sizeof(*rom) * rom_length                       , "ROM"    },
-		{RETRO_MEMDESC_SYSTEM_RAM | MEMDESC_NATIVE_ENDIAN, (void*)clownmdemu_state.m68k.ram,                0, 0x00FF0000, 0, 0, sizeof(clownmdemu_state.m68k.ram)               , "68KRAM" },
-		{RETRO_MEMDESC_SYSTEM_RAM | MEMDESC_NATIVE_ENDIAN, (void*)clownmdemu_state.mega_cd.prg_ram.buffer,  0, 0x80020000, 0, 0, sizeof(clownmdemu_state.mega_cd.prg_ram.buffer) , "PRGRAM" },
-		{RETRO_MEMDESC_SYSTEM_RAM | MEMDESC_NATIVE_ENDIAN, (void*)clownmdemu_state.mega_cd.word_ram.buffer, 0, 0x00200000, 0, 0, sizeof(clownmdemu_state.mega_cd.word_ram.buffer), "WORDRAM"},
-		{RETRO_MEMDESC_SYSTEM_RAM,                         (void*)clownmdemu_state.z80.ram,                 0, 0x00A00000, 0, 0, sizeof(clownmdemu_state.z80.ram)                , "Z80RAM" },
+		{RETRO_MEMDESC_SYSTEM_RAM | MEMDESC_NATIVE_ENDIAN, (void*)clownmdemu.state.m68k.ram,                0, 0x00FF0000, 0, 0, sizeof(clownmdemu.state.m68k.ram)               , "68KRAM" },
+		{RETRO_MEMDESC_SYSTEM_RAM | MEMDESC_NATIVE_ENDIAN, (void*)clownmdemu.state.mega_cd.prg_ram.buffer,  0, 0x80020000, 0, 0, sizeof(clownmdemu.state.mega_cd.prg_ram.buffer) , "PRGRAM" },
+		{RETRO_MEMDESC_SYSTEM_RAM | MEMDESC_NATIVE_ENDIAN, (void*)clownmdemu.state.mega_cd.word_ram.buffer, 0, 0x00200000, 0, 0, sizeof(clownmdemu.state.mega_cd.word_ram.buffer), "WORDRAM"},
+		{RETRO_MEMDESC_SYSTEM_RAM,                         (void*)clownmdemu.state.z80.ram,                 0, 0x00A00000, 0, 0, sizeof(clownmdemu.state.z80.ram)                , "Z80RAM" },
 	};
 
 	const struct retro_memory_map memory_maps = {descriptors, CC_COUNT_OF(descriptors)};
@@ -1418,7 +1419,7 @@ bool retro_load_game_special(const unsigned int type, const struct retro_game_in
 
 typedef struct SerialisedState
 {
-	ClownMDEmu_State clownmdemu;
+	ClownMDEmu_StateBackup clownmdemu;
 	CDReader_StateBackup cd_reader;
 } SerialisedState;
 
@@ -1433,7 +1434,7 @@ bool retro_serialize(void* const data, const size_t size)
 
 	(void)size;
 
-	serialised_state->clownmdemu = clownmdemu_state;
+	ClownMDEmu_GetStateBackup(&clownmdemu, &serialised_state->clownmdemu);
 	CDReader_GetStateBackup(&cd_reader, &serialised_state->cd_reader);
 	return true;
 }
@@ -1444,7 +1445,7 @@ bool retro_unserialize(const void* const data, const size_t size)
 
 	(void)size;
 
-	clownmdemu_state = serialised_state->clownmdemu;
+	ClownMDEmu_SetStateBackup(&clownmdemu, &serialised_state->clownmdemu);
 	CDReader_SetStateBackup(&cd_reader, &serialised_state->cd_reader);
 	return true;
 }
@@ -1454,13 +1455,13 @@ void* retro_get_memory_data(const unsigned int id)
 	switch (id)
 	{
 		case RETRO_MEMORY_SAVE_RAM:
-			return clownmdemu_state.external_ram.buffer;
+			return clownmdemu.state.external_ram.buffer;
 
 		case RETRO_MEMORY_SYSTEM_RAM:
-			return clownmdemu_state.m68k.ram;
+			return clownmdemu.state.m68k.ram;
 
 		case RETRO_MEMORY_VIDEO_RAM:
-			return clownmdemu_state.vdp.vram;
+			return clownmdemu.vdp.state.vram;
 	}
 
 	return NULL;
@@ -1471,13 +1472,13 @@ size_t retro_get_memory_size(const unsigned int id)
 	switch (id)
 	{
 		case RETRO_MEMORY_SAVE_RAM:
-			return sizeof(clownmdemu_state.external_ram.buffer);
+			return sizeof(clownmdemu.state.external_ram.buffer);
 
 		case RETRO_MEMORY_SYSTEM_RAM:
-			return sizeof(clownmdemu_state.m68k.ram);
+			return sizeof(clownmdemu.state.m68k.ram);
 
 		case RETRO_MEMORY_VIDEO_RAM:
-			return sizeof(clownmdemu_state.vdp.vram);
+			return sizeof(clownmdemu.vdp.state.vram);
 	}
 
 	return 0;
