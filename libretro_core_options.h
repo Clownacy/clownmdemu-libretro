@@ -540,7 +540,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 	},
 	{
 		/* Key. */
-		"clownmdemu_widescreen_tile_pairs",
+		"clownmdemu_widescreen_tiles",
 		/* Label. */
 		"Video > Widescreen Hack",
 		/* Categorised label. */
@@ -554,12 +554,18 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		/* Values. */
 		{
 			{"0", "disabled"},
-			{"1", "32 Extra Pixels"},
-			{"2", "64 Extra Pixels"},
-			{"3", "96 Extra Pixels"},
-			{"4", "128 Extra Pixels"},
-			{"5", "160 Extra Pixels"},
-			{"6", "192 Extra Pixels"},
+			{"1", "2 Extra Columns"},
+			{"2", "4 Extra Columns"},
+			{"3", "6 Extra Columns"},
+			{"4", "8 Extra Columns"},
+			{"5", "10 Extra Columns"},
+			{"6", "12 Extra Columns"},
+			{"7", "14 Extra Columns"},
+			{"8", "16 Extra Columns"},
+			{"9", "18 Extra Columns"},
+			{"10", "20 Extra Columns"},
+			{"11", "22 Extra Columns"},
+			{"12", "24 Extra Columns"},
 			{NULL, NULL},
 		},
 		/* Default value. */

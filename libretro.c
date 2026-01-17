@@ -87,7 +87,7 @@ static void Geometry_Export(struct retro_game_geometry* const output)
 	output->base_height  = geometry.current_screen_height;
 	output->max_width    = FRAMEBUFFER_WIDTH;
 	output->max_height   = FRAMEBUFFER_HEIGHT;
-	output->aspect_ratio = ((VDP_H40_SCREEN_WIDTH_IN_TILE_PAIRS + clownmdemu.vdp.configuration.widescreen_tile_pairs * 2) * VDP_TILE_PAIR_WIDTH) / (float)geometry.current_screen_height;
+	output->aspect_ratio = ((VDP_H40_SCREEN_WIDTH_IN_TILES + clownmdemu.vdp.configuration.widescreen_tiles * 2) * VDP_TILE_WIDTH) / (float)geometry.current_screen_height;
 
 	/* Squish the aspect ratio vertically when in Interlace Mode 2. */
 	if (!geometry.tall_interlace_mode_2 && geometry.current_screen_height >= VDP_V28_SCANLINES_IN_TILES * VDP_INTERLACE_MODE_2_TILE_HEIGHT)
@@ -871,7 +871,7 @@ static void UpdateOptions(const cc_bool only_update_flags)
 	clownmdemu.vdp.configuration.window_disabled              =  DoOptionBoolean("clownmdemu_disable_window_plane", "enabled");
 	clownmdemu.vdp.configuration.planes_disabled[0]           =  DoOptionBoolean("clownmdemu_disable_plane_a", "enabled");
 	clownmdemu.vdp.configuration.planes_disabled[1]           =  DoOptionBoolean("clownmdemu_disable_plane_b", "enabled");
-	clownmdemu.vdp.configuration.widescreen_tile_pairs        =  DoOptionNumerical("clownmdemu_widescreen_tile_pairs");
+	clownmdemu.vdp.configuration.widescreen_tiles             =  DoOptionNumerical("clownmdemu_widescreen_tiles");
 	clownmdemu.fm.configuration.fm_channels_disabled[0]       =  DoOptionBoolean("clownmdemu_disable_fm1", "enabled");
 	clownmdemu.fm.configuration.fm_channels_disabled[1]       =  DoOptionBoolean("clownmdemu_disable_fm2", "enabled");
 	clownmdemu.fm.configuration.fm_channels_disabled[2]       =  DoOptionBoolean("clownmdemu_disable_fm3", "enabled");
