@@ -21,7 +21,7 @@
 #define FRAMEBUFFER_HEIGHT VDP_MAX_SCANLINES
 
 #define CARTRIDGE_FILE_EXTENSIONS "bin|md|gen"
-#define CD_FILE_EXTENSIONS "cue|iso"
+#define CD_FILE_EXTENSIONS "cue|iso|chd"
 
 /* Mixer data. */
 static Mixer_State mixer;
