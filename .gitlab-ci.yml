@@ -62,10 +62,6 @@ include:
   # PlayStation3
   - project: 'libretro-infrastructure/ci-templates'
     file: '/psl1ght-static.yml'
-
-  # PlayStation4
-  - project: 'libretro-infrastructure/ci-templates'
-    file: '/orbis-static.yml'
     
   # PlayStation Vita
   - project: 'libretro-infrastructure/ci-templates'
@@ -241,12 +237,6 @@ libretro-build-tvos-arm64:
 libretro-build-psl1ght:
   extends:
     - .libretro-psl1ght-static-retroarch-master
-    - .core-defs
-    
-# PlayStation4
-libretro-build-orbis:
-  extends:
-    - .libretro-orbis-static-retroarch-master
     - .core-defs
 
 # PlayStation Vita
