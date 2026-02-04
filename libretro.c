@@ -1078,7 +1078,7 @@ void retro_set_controller_port_device(const unsigned int port, const unsigned in
 void retro_get_system_info(struct retro_system_info* const info)
 {
 	info->library_name     = "ClownMDEmu";
-	info->library_version  = "v1.6.3" GIT_VERSION;
+	info->library_version  = "v1.6.4" GIT_VERSION;
 	info->need_fullpath    = true;
 	info->valid_extensions = CARTRIDGE_FILE_EXTENSIONS "|" CD_FILE_EXTENSIONS;
 	info->block_extract    = false;
