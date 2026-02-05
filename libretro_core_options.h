@@ -579,7 +579,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		/* Categorised label. */
 		"Low-Pass Filter",
 		/* Description. */
-		"Makes the audio sound 'softer', just like on a real Mega Drive.",
+		"Lowers the volume of high frequencies to make the audio 'softer', like a real Mega Drive does. Without this, treble will become louder due to differences in volume balancing.",
 		/* Categorised description. */
 		NULL,
 		/* Category. */
@@ -601,7 +601,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		/* Categorised label. */
 		"Low-Volume Distortion",
 		/* Description. */
-		"Approximates the so-called 'ladder effect' that is present in early Mega Drives. Without this, certain sounds in some games will be too quiet.",
+		"Enables the so-called 'ladder effect' that is present in early Mega Drives. Without this, some quiet sounds will become inaudible.",
 		/* Categorised description. */
 		NULL,
 		/* Category. */
