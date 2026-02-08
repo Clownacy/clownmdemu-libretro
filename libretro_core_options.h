@@ -311,6 +311,28 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 #undef DO_PCM_CHANNEL
 	{
 		/* Key. */
+		"clownmdemu_disable_cdda",
+		/* Label. */
+		"Debug > Disable CDDA",
+		/* Categorised label. */
+		"Disable CDDA",
+		/* Description. */
+		"Disable the CDDA channel.",
+		/* Categorised description. */
+		NULL,
+		/* Category. */
+		"debug",
+		/* Values. */
+		{
+			{"enabled", NULL},
+			{"disabled", NULL},
+			{NULL, NULL},
+		},
+		/* Default value. */
+		"disabled"
+	},
+	{
+		/* Key. */
 		"clownmdemu_tv_standard",
 		/* Label. */
 		"Console > TV Standard",

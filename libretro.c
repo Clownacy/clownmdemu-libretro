@@ -892,6 +892,7 @@ static void UpdateOptions(const cc_bool only_update_flags)
 	clownmdemu.mega_cd.pcm.configuration.channels_disabled[5] =  DoOptionBoolean("clownmdemu_disable_pcm6", "enabled");
 	clownmdemu.mega_cd.pcm.configuration.channels_disabled[6] =  DoOptionBoolean("clownmdemu_disable_pcm7", "enabled");
 	clownmdemu.mega_cd.pcm.configuration.channels_disabled[7] =  DoOptionBoolean("clownmdemu_disable_pcm8", "enabled");
+	clownmdemu.mega_cd.cdda.configuration.disabled            =  DoOptionBoolean("clownmdemu_disable_cdda", "enabled");
 }
 
 /************************/
