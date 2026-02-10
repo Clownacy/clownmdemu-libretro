@@ -95,6 +95,10 @@ include:
   - project: 'libretro-infrastructure/ci-templates'
     file: '/tvos-cmake.yml'
 
+  # webOS
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/webos-cmake.yml'
+
   #################################### MISC ##################################
   # Emscripten
   - project: 'libretro-infrastructure/ci-templates'
@@ -225,12 +229,6 @@ libretro-build-ios9:
   extends:
     - .libretro-ios-cmake-ios9
     - .core-defs
-    
-# tvOS
-libretro-build-tvos-arm64:
-  extends:
-    - .libretro-tvos-cmake-arm64
-    - .core-defs
 
 ################################### CONSOLES #################################
 # PlayStation3
@@ -303,6 +301,18 @@ libretro-build-retrofw-mips32:
 libretro-build-miyoo-arm32:
   extends:
     - .libretro-miyoo-cmake-arm32
+    - .core-defs
+
+# tvOS
+libretro-build-tvos-arm64:
+  extends:
+    - .libretro-tvos-cmake-arm64
+    - .core-defs
+
+# webOS
+libretro-build-webos-arm64:
+  extends:
+    - .libretro-webos-armv7a-cmake
     - .core-defs
 
 #################################### MISC ##################################
