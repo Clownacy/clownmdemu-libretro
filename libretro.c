@@ -1135,7 +1135,7 @@ void retro_set_environment(const retro_environment_t environment_callback)
 		struct retro_log_callback logging;
 		if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, (void*)&logging) && logging.log != NULL)
 			libretro_callbacks.log = logging.log;
-		else
+		else if (libretro_callbacks.log == NULL)
 			libretro_callbacks.log = FallbackErrorLogCallback;
 	}
 
