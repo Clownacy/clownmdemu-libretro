@@ -1492,16 +1492,239 @@ size_t retro_get_memory_size(const unsigned int id)
 	return 0;
 }
 
+/* Cheat stuff. */
+
+typedef struct Cheat_GameGenie
+{
+	unsigned long address;
+	unsigned short value;
+} Cheat_GameGenie;
+
+static struct
+{
+	unsigned long rom_buffer_index;
+	unsigned short new_value, old_value;
+	cc_bool enabled;
+} cheat_codes[0x100];
+
+static char Cheat_GameGenieDecodeCharacter(const char character)
+{
+	switch (character)
+	{
+		case 'A':
+		case 'a':
+			return 0x00;
+		case 'B':
+		case 'b':
+			return 0x01;
+		case 'C':
+		case 'c':
+			return 0x02;
+		case 'D':
+		case 'd':
+			return 0x03;
+		case 'E':
+		case 'e':
+			return 0x04;
+		case 'F':
+		case 'f':
+			return 0x05;
+		case 'G':
+		case 'g':
+			return 0x06;
+		case 'H':
+		case 'h':
+			return 0x07;
+		case 'J':
+		case 'j':
+			return 0x08;
+		case 'K':
+		case 'k':
+			return 0x09;
+		case 'L':
+		case 'l':
+			return 0x0A;
+		case 'M':
+		case 'm':
+			return 0x0B;
+		case 'N':
+		case 'n':
+			return 0x0C;
+		case 'P':
+		case 'p':
+			return 0x0D;
+		case 'R':
+		case 'r':
+			return 0x0E;
+		case 'S':
+		case 's':
+			return 0x0F;
+		case 'T':
+		case 't':
+			return 0x10;
+		case 'V':
+		case 'v':
+			return 0x11;
+		case 'W':
+		case 'w':
+			return 0x12;
+		case 'X':
+		case 'x':
+			return 0x13;
+		case 'Y':
+		case 'y':
+			return 0x14;
+		case 'Z':
+		case 'z':
+			return 0x15;
+		case '0':
+			return 0x16;
+		case '1':
+			return 0x17;
+		case '2':
+			return 0x18;
+		case '3':
+			return 0x19;
+		case '4':
+			return 0x1A;
+		case '5':
+			return 0x1B;
+		case '6':
+			return 0x1C;
+		case '7':
+			return 0x1D;
+		case '8':
+			return 0x1E;
+		case '9':
+			return 0x1F;
+	}
+
+	return -1;
+}
+
+static bool Cheat_GameGenieDecode(Cheat_GameGenie* const cheat, const char* const code)
+{
+	unsigned int i;
+	char encoded_characters[8];
+	unsigned int decoded_bytes[5], current_decoded_byte = 0;
+	unsigned int combiner = 0, total_combined_bits = 0;
+
+	/* Read characters from string. */
+	if (sscanf(code, "%c%c%c%c-%c%c%c%c",
+		&encoded_characters[0],
+		&encoded_characters[1],
+		&encoded_characters[2],
+		&encoded_characters[3],
+		&encoded_characters[4],
+		&encoded_characters[5],
+		&encoded_characters[6],
+		&encoded_characters[7]) != 8)
+		return false;
+
+	/* Decode characters to 5-bit integers and combine them into 8-bit integers. */
+	for (i = 0; i < CC_COUNT_OF(encoded_characters); ++i)
+	{
+		const char decoded_integer = Cheat_GameGenieDecodeCharacter(encoded_characters[i]);
+
+		if (decoded_integer < 0)
+			return false;
+
+		combiner <<= 5;
+		combiner |= decoded_integer;
+
+		total_combined_bits += 5;
+
+		if (total_combined_bits >= 8)
+		{
+			total_combined_bits -= 8;
+			decoded_bytes[current_decoded_byte++] = (combiner >> total_combined_bits) & 0xFF;
+		}
+	}
+
+	/* Combine (and unscramble) 8-bit integers into address and value. */
+	cheat->address = (unsigned long)decoded_bytes[2] << 16
+		| (unsigned long)decoded_bytes[1] << 8
+		| decoded_bytes[4];
+	cheat->value = ((unsigned int)decoded_bytes[3] & 7) << 13
+		| ((unsigned int)decoded_bytes[3] & 0xF8) << 5
+		| decoded_bytes[0];
+
+	return true;
+}
+
+static void Cheat_UndoROMPatches(void)
+{
+	size_t i;
+
+	for (i = 0; i < CC_COUNT_OF(cheat_codes); ++i)
+		if (cheat_codes[i].enabled)
+			rom[cheat_codes[i].rom_buffer_index] = cheat_codes[i].old_value;
+}
+
+static void Cheat_ApplyROMPatches(void)
+{
+	size_t i;
+
+	for (i = 0; i < CC_COUNT_OF(cheat_codes); ++i)
+		if (cheat_codes[i].enabled)
+			rom[cheat_codes[i].rom_buffer_index] = cheat_codes[i].new_value;
+}
+
+static void Cheat_AddCheat(const unsigned int index, const bool enabled, const char* const code)
+{
+	Cheat_GameGenie cheat_game_genie;
+	unsigned long action_replay_address;
+	unsigned int action_replay_value;
+
+	if (Cheat_GameGenieDecode(&cheat_game_genie, code))
+	{
+		/* Game Genie code. */
+		const unsigned long rom_buffer_index = cheat_game_genie.address / 2;
+
+		libretro_callbacks.log(RETRO_LOG_INFO, "Cheat code %u (%s) decoded to '%06lX-%04X'.\n", index, code, cheat_game_genie.address, cheat_game_genie.value);
+
+		if (cheat_game_genie.address % 2 != 0)
+		{
+			libretro_callbacks.log(RETRO_LOG_ERROR, "Cheat code %u (%s) decodes to an odd address (0x%06lX), which is invalid!\n", index, code, cheat_game_genie.address);
+		}
+		else if (rom_buffer_index >= rom_length)
+		{
+			libretro_callbacks.log(RETRO_LOG_ERROR, "Cheat code %u (%s) decodes to an address (0x%06lX) which exceeds the size of the ROM (0x%06lX)!\n", index, code, rom_buffer_index * 2, (unsigned long)(rom_length * 2));
+		}
+		else if (index >= CC_COUNT_OF(cheat_codes))
+		{
+			libretro_callbacks.log(RETRO_LOG_ERROR, "Cheat code %u (%s) has an index which exceeds the size of the cheat code buffer (%lu)!\n", index, code, (unsigned long)CC_COUNT_OF(cheat_codes));
+		}
+		else
+		{
+			/* Code is valid; add to the list. */
+			cheat_codes[index].rom_buffer_index = rom_buffer_index;
+			cheat_codes[index].new_value = cheat_game_genie.value;
+			cheat_codes[index].old_value = rom[rom_buffer_index];
+			cheat_codes[index].enabled = enabled;
+		}
+	}
+	else if (sscanf(code, "%lX-%X", &action_replay_address, &action_replay_value) == 2)
+	{
+		/* Action Replay code. */
+		/* TODO */
+	}
+	else
+	{
+		libretro_callbacks.log(RETRO_LOG_ERROR, "Cheat code '%s' is in an unrecognised format.\n", code);
+	}
+}
+
 void retro_cheat_reset(void)
 {
-	/* TODO: This. */
+	libretro_callbacks.log(RETRO_LOG_INFO, "Resetting cheat codes.\n");
+	Cheat_UndoROMPatches();
+	memset(&cheat_codes, 0, sizeof(cheat_codes));
 }
 
 void retro_cheat_set(const unsigned int index, const bool enabled, const char* const code)
 {
-	(void)index;
-	(void)enabled;
-	(void)code;
-
-	/* TODO: This. */
+	Cheat_UndoROMPatches();
+	Cheat_AddCheat(index, enabled, code);
+	Cheat_ApplyROMPatches();
 }
