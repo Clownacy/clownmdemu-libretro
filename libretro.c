@@ -1494,20 +1494,20 @@ size_t retro_get_memory_size(const unsigned int id)
 
 /* Cheat stuff. */
 
-typedef struct Cheat_GameGenie
+typedef struct Cheat_DecodedCheat
 {
 	unsigned long address;
 	unsigned short value;
-} Cheat_GameGenie;
+} Cheat_DecodedCheat;
 
 static struct
 {
 	unsigned long rom_buffer_index;
-	unsigned short new_value, old_value;
+	unsigned short new_value, old_rom_value;
 	cc_bool enabled;
 } cheat_codes[0x100];
 
-static char Cheat_GameGenieDecodeCharacter(const char character)
+static char Cheat_DecodeGameGenieCharacter(const char character)
 {
 	switch (character)
 	{
@@ -1602,7 +1602,7 @@ static char Cheat_GameGenieDecodeCharacter(const char character)
 	return -1;
 }
 
-static bool Cheat_GameGenieDecode(Cheat_GameGenie* const cheat, const char* const code)
+static bool Cheat_DecodeGameGenie(Cheat_DecodedCheat* const cheat, const char* const code)
 {
 	unsigned int i;
 	char encoded_characters[8];
@@ -1624,7 +1624,7 @@ static bool Cheat_GameGenieDecode(Cheat_GameGenie* const cheat, const char* cons
 	/* Decode characters to 5-bit integers and combine them into 8-bit integers. */
 	for (i = 0; i < CC_COUNT_OF(encoded_characters); ++i)
 	{
-		const char decoded_integer = Cheat_GameGenieDecodeCharacter(encoded_characters[i]);
+		const char decoded_integer = Cheat_DecodeGameGenieCharacter(encoded_characters[i]);
 
 		if (decoded_integer < 0)
 			return false;
@@ -1652,13 +1652,18 @@ static bool Cheat_GameGenieDecode(Cheat_GameGenie* const cheat, const char* cons
 	return true;
 }
 
+static bool Cheat_DecodeActionReplay(Cheat_DecodedCheat* const cheat, const char* const code)
+{
+	return sscanf(code, "%lX:%hX", &cheat->address, &cheat->value) == 2;
+}
+
 static void Cheat_UndoROMPatches(void)
 {
 	size_t i;
 
 	for (i = 0; i < CC_COUNT_OF(cheat_codes); ++i)
 		if (cheat_codes[i].enabled)
-			rom[cheat_codes[i].rom_buffer_index] = cheat_codes[i].old_value;
+			rom[cheat_codes[i].rom_buffer_index] = cheat_codes[i].old_rom_value;
 }
 
 static void Cheat_ApplyROMPatches(void)
@@ -1672,20 +1677,21 @@ static void Cheat_ApplyROMPatches(void)
 
 static void Cheat_AddCheat(const unsigned int index, const bool enabled, const char* const code)
 {
-	Cheat_GameGenie cheat_game_genie;
-	unsigned long action_replay_address;
-	unsigned int action_replay_value;
+	Cheat_DecodedCheat decoded_cheat;
 
-	if (Cheat_GameGenieDecode(&cheat_game_genie, code))
+	if (!Cheat_DecodeGameGenie(&decoded_cheat, code) && !Cheat_DecodeActionReplay(&decoded_cheat, code))
 	{
-		/* Game Genie code. */
-		const unsigned long rom_buffer_index = cheat_game_genie.address / 2;
+		libretro_callbacks.log(RETRO_LOG_ERROR, "Cheat code '%s' is in an unrecognised format.\n", code);
+	}
+	else
+	{
+		const unsigned long rom_buffer_index = decoded_cheat.address / 2;
 
-		libretro_callbacks.log(RETRO_LOG_INFO, "Cheat code %u (%s) decoded to '%06lX-%04X'.\n", index, code, cheat_game_genie.address, cheat_game_genie.value);
+		libretro_callbacks.log(RETRO_LOG_INFO, "Cheat code %u (%s) decoded to '%06lX-%04X'.\n", index, code, decoded_cheat.address, decoded_cheat.value);
 
-		if (cheat_game_genie.address % 2 != 0)
+		if (decoded_cheat.address % 2 != 0)
 		{
-			libretro_callbacks.log(RETRO_LOG_ERROR, "Cheat code %u (%s) decodes to an odd address (0x%06lX), which is invalid!\n", index, code, cheat_game_genie.address);
+			libretro_callbacks.log(RETRO_LOG_ERROR, "Cheat code %u (%s) decodes to an odd address (0x%06lX), which is invalid!\n", index, code, decoded_cheat.address);
 		}
 		else if (rom_buffer_index >= rom_length)
 		{
@@ -1699,19 +1705,10 @@ static void Cheat_AddCheat(const unsigned int index, const bool enabled, const c
 		{
 			/* Code is valid; add to the list. */
 			cheat_codes[index].rom_buffer_index = rom_buffer_index;
-			cheat_codes[index].new_value = cheat_game_genie.value;
-			cheat_codes[index].old_value = rom[rom_buffer_index];
+			cheat_codes[index].new_value = decoded_cheat.value;
+			cheat_codes[index].old_rom_value = rom[rom_buffer_index];
 			cheat_codes[index].enabled = enabled;
 		}
-	}
-	else if (sscanf(code, "%lX-%X", &action_replay_address, &action_replay_value) == 2)
-	{
-		/* Action Replay code. */
-		/* TODO */
-	}
-	else
-	{
-		libretro_callbacks.log(RETRO_LOG_ERROR, "Cheat code '%s' is in an unrecognised format.\n", code);
 	}
 }
 
