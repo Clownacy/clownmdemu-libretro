@@ -641,7 +641,7 @@ static const char* GetBuRAMDirectory(void)
 	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, (void*)&path))
 		return path;
 
-	return "";
+	return ".";
 }
 
 static char* GetBuRAMPath(const char* const filename)
