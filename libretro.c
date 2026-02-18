@@ -1258,6 +1258,8 @@ static void MixerCompleteCallback(void* const user_data, const cc_s16l* const au
 	libretro_callbacks.audio_batch(audio_samples, total_frames);
 }
 
+static void Cheat_ApplyRAMPatches(void); /* TODO: Split cheat stuff to its own C file and remove this. */
+
 void retro_run(void)
 {
 	bool options_updated;
@@ -1268,6 +1270,8 @@ void retro_run(void)
 
 	/* Poll inputs. */
 	libretro_callbacks.input_poll();
+
+	Cheat_ApplyRAMPatches();
 
 	Mixer_Begin(&mixer);
 
@@ -1502,10 +1506,13 @@ typedef struct Cheat_DecodedCheat
 
 static struct
 {
-	unsigned long rom_buffer_index;
+	unsigned long address;
 	unsigned short new_value, old_rom_value;
 	cc_bool enabled;
 } cheat_codes[0x100];
+
+#define Cheat_IsROMCheat(CHEAT) ((CHEAT)->address < rom_length * 2)
+#define Cheat_IsRAMCheat(CHEAT) (((CHEAT)->address & 0xFFFFFF) >= 0xE00000 / 2)
 
 static char Cheat_DecodeGameGenieCharacter(const char character)
 {
@@ -1662,8 +1669,8 @@ static void Cheat_UndoROMPatches(void)
 	size_t i;
 
 	for (i = 0; i < CC_COUNT_OF(cheat_codes); ++i)
-		if (cheat_codes[i].enabled)
-			rom[cheat_codes[i].rom_buffer_index] = cheat_codes[i].old_rom_value;
+		if (cheat_codes[i].enabled && Cheat_IsROMCheat(&cheat_codes[i]))
+			rom[cheat_codes[i].address / 2] = cheat_codes[i].old_rom_value;
 }
 
 static void Cheat_ApplyROMPatches(void)
@@ -1671,42 +1678,50 @@ static void Cheat_ApplyROMPatches(void)
 	size_t i;
 
 	for (i = 0; i < CC_COUNT_OF(cheat_codes); ++i)
-		if (cheat_codes[i].enabled)
-			rom[cheat_codes[i].rom_buffer_index] = cheat_codes[i].new_value;
+		if (cheat_codes[i].enabled && Cheat_IsROMCheat(&cheat_codes[i]))
+			rom[cheat_codes[i].address / 2] = cheat_codes[i].new_value;
+}
+
+static void Cheat_ApplyRAMPatches(void)
+{
+	size_t i;
+
+	for (i = 0; i < CC_COUNT_OF(cheat_codes); ++i)
+		if (cheat_codes[i].enabled && Cheat_IsRAMCheat(&cheat_codes[i]))
+			clownmdemu.state.m68k.ram[(cheat_codes[i].address / 2) % CC_COUNT_OF(clownmdemu.state.m68k.ram)] = cheat_codes[i].new_value;
 }
 
 static void Cheat_AddCheat(const unsigned int index, const bool enabled, const char* const code)
 {
 	Cheat_DecodedCheat decoded_cheat;
 
-	if (!Cheat_DecodeGameGenie(&decoded_cheat, code) && !Cheat_DecodeActionReplay(&decoded_cheat, code))
+	if (index >= CC_COUNT_OF(cheat_codes))
+	{
+		libretro_callbacks.log(RETRO_LOG_ERROR, "Cheat code %u (%s) has an index which exceeds the size of the cheat code buffer (%lu)!\n", index, code, (unsigned long)CC_COUNT_OF(cheat_codes));
+	}
+	else if (!Cheat_DecodeGameGenie(&decoded_cheat, code) && !Cheat_DecodeActionReplay(&decoded_cheat, code))
 	{
 		libretro_callbacks.log(RETRO_LOG_ERROR, "Cheat code '%s' is in an unrecognised format.\n", code);
 	}
 	else
 	{
-		const unsigned long rom_buffer_index = decoded_cheat.address / 2;
-
 		libretro_callbacks.log(RETRO_LOG_INFO, "Cheat code %u (%s) decoded to '%06lX-%04X'.\n", index, code, decoded_cheat.address, decoded_cheat.value);
 
 		if (decoded_cheat.address % 2 != 0)
 		{
 			libretro_callbacks.log(RETRO_LOG_ERROR, "Cheat code %u (%s) decodes to an odd address (0x%06lX), which is invalid!\n", index, code, decoded_cheat.address);
 		}
-		else if (rom_buffer_index >= rom_length)
+		else if (!Cheat_IsROMCheat(&decoded_cheat) && !Cheat_IsRAMCheat(&decoded_cheat))
 		{
-			libretro_callbacks.log(RETRO_LOG_ERROR, "Cheat code %u (%s) decodes to an address (0x%06lX) which exceeds the size of the ROM (0x%06lX)!\n", index, code, rom_buffer_index * 2, (unsigned long)(rom_length * 2));
-		}
-		else if (index >= CC_COUNT_OF(cheat_codes))
-		{
-			libretro_callbacks.log(RETRO_LOG_ERROR, "Cheat code %u (%s) has an index which exceeds the size of the cheat code buffer (%lu)!\n", index, code, (unsigned long)CC_COUNT_OF(cheat_codes));
+			libretro_callbacks.log(RETRO_LOG_ERROR, "Cheat code %u (%s) decodes to an supported address range (0x%06lX)!\n", index, code, decoded_cheat.address);
 		}
 		else
 		{
 			/* Code is valid; add to the list. */
-			cheat_codes[index].rom_buffer_index = rom_buffer_index;
+			cheat_codes[index].address = decoded_cheat.address;
 			cheat_codes[index].new_value = decoded_cheat.value;
-			cheat_codes[index].old_rom_value = rom[rom_buffer_index];
+			if (Cheat_IsROMCheat(&decoded_cheat))
+				cheat_codes[index].old_rom_value = rom[decoded_cheat.address / 2];
 			cheat_codes[index].enabled = enabled;
 		}
 	}
