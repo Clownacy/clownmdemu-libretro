@@ -12,6 +12,7 @@
 #include "retro_endianness.h"
 
 #include "common/cd-reader.h"
+#include "common/cheat.h"
 #include "common/core/clownmdemu.h"
 
 #define MIXER_IMPLEMENTATION
@@ -1258,8 +1259,6 @@ static void MixerCompleteCallback(void* const user_data, const cc_s16l* const au
 	libretro_callbacks.audio_batch(audio_samples, total_frames);
 }
 
-static void Cheat_ApplyRAMPatches(void); /* TODO: Split cheat stuff to its own C file and remove this. */
-
 void retro_run(void)
 {
 	bool options_updated;
@@ -1271,10 +1270,9 @@ void retro_run(void)
 	/* Poll inputs. */
 	libretro_callbacks.input_poll();
 
-	Cheat_ApplyRAMPatches();
-
 	Mixer_Begin(&mixer);
 
+	Cheat_ApplyRAMPatches(&clownmdemu);
 	ClownMDEmu_Iterate(&clownmdemu);
 
 	Mixer_End(&mixer, MixerCompleteCallback, NULL);
@@ -1496,246 +1494,14 @@ size_t retro_get_memory_size(const unsigned int id)
 	return 0;
 }
 
-/* Cheat stuff. */
-
-typedef struct Cheat_DecodedCheat
-{
-	unsigned long address;
-	unsigned short value;
-} Cheat_DecodedCheat;
-
-static struct
-{
-	Cheat_DecodedCheat code;
-	unsigned short old_rom_value;
-	bool enabled;
-} cheats[0x100];
-
-#define Cheat_IsROMCheat(CHEAT) (((CHEAT)->address & 0xFFFFFF) < rom_length * 2)
-#define Cheat_IsRAMCheat(CHEAT) (((CHEAT)->address & 0xFFFFFF) >= 0xE00000)
-
-static char Cheat_DecodeGameGenieCharacter(const char character)
-{
-	switch (character)
-	{
-		case 'A':
-		case 'a':
-			return 0x00;
-		case 'B':
-		case 'b':
-			return 0x01;
-		case 'C':
-		case 'c':
-			return 0x02;
-		case 'D':
-		case 'd':
-			return 0x03;
-		case 'E':
-		case 'e':
-			return 0x04;
-		case 'F':
-		case 'f':
-			return 0x05;
-		case 'G':
-		case 'g':
-			return 0x06;
-		case 'H':
-		case 'h':
-			return 0x07;
-		case 'J':
-		case 'j':
-			return 0x08;
-		case 'K':
-		case 'k':
-			return 0x09;
-		case 'L':
-		case 'l':
-			return 0x0A;
-		case 'M':
-		case 'm':
-			return 0x0B;
-		case 'N':
-		case 'n':
-			return 0x0C;
-		case 'P':
-		case 'p':
-			return 0x0D;
-		case 'R':
-		case 'r':
-			return 0x0E;
-		case 'S':
-		case 's':
-			return 0x0F;
-		case 'T':
-		case 't':
-			return 0x10;
-		case 'V':
-		case 'v':
-			return 0x11;
-		case 'W':
-		case 'w':
-			return 0x12;
-		case 'X':
-		case 'x':
-			return 0x13;
-		case 'Y':
-		case 'y':
-			return 0x14;
-		case 'Z':
-		case 'z':
-			return 0x15;
-		case '0':
-			return 0x16;
-		case '1':
-			return 0x17;
-		case '2':
-			return 0x18;
-		case '3':
-			return 0x19;
-		case '4':
-			return 0x1A;
-		case '5':
-			return 0x1B;
-		case '6':
-			return 0x1C;
-		case '7':
-			return 0x1D;
-		case '8':
-			return 0x1E;
-		case '9':
-			return 0x1F;
-	}
-
-	return -1;
-}
-
-static bool Cheat_DecodeGameGenie(Cheat_DecodedCheat* const cheat, const char* const code)
-{
-	unsigned int i;
-	char encoded_characters[8];
-	unsigned int decoded_bytes[5], current_decoded_byte = 0;
-	unsigned int combiner = 0, total_combined_bits = 0;
-
-	/* Read characters from string. */
-	if (sscanf(code, "%c%c%c%c-%c%c%c%c",
-		&encoded_characters[0],
-		&encoded_characters[1],
-		&encoded_characters[2],
-		&encoded_characters[3],
-		&encoded_characters[4],
-		&encoded_characters[5],
-		&encoded_characters[6],
-		&encoded_characters[7]) != 8)
-		return false;
-
-	/* Decode characters to 5-bit integers and combine them into 8-bit integers. */
-	for (i = 0; i < CC_COUNT_OF(encoded_characters); ++i)
-	{
-		const char decoded_integer = Cheat_DecodeGameGenieCharacter(encoded_characters[i]);
-
-		if (decoded_integer < 0)
-			return false;
-
-		combiner <<= 5;
-		combiner |= decoded_integer;
-
-		total_combined_bits += 5;
-
-		if (total_combined_bits >= 8)
-		{
-			total_combined_bits -= 8;
-			decoded_bytes[current_decoded_byte++] = (combiner >> total_combined_bits) & 0xFF;
-		}
-	}
-
-	/* Combine (and unscramble) 8-bit integers into address and value. */
-	cheat->address = (unsigned long)decoded_bytes[2] << 16
-		| (unsigned long)decoded_bytes[1] << 8
-		| decoded_bytes[4];
-	cheat->value = ((unsigned int)decoded_bytes[3] & 7) << 13
-		| ((unsigned int)decoded_bytes[3] & 0xF8) << 5
-		| decoded_bytes[0];
-
-	return true;
-}
-
-static bool Cheat_DecodeActionReplay(Cheat_DecodedCheat* const cheat, const char* const code)
-{
-	return sscanf(code, "%lX:%hX", &cheat->address, &cheat->value) == 2;
-}
-
-static void Cheat_UndoROMPatches(void)
-{
-	size_t i;
-
-	for (i = 0; i < CC_COUNT_OF(cheats); ++i)
-		if (cheats[i].enabled && Cheat_IsROMCheat(&cheats[i].code))
-			rom[cheats[i].code.address / 2] = cheats[i].old_rom_value;
-}
-
-static void Cheat_ApplyROMPatches(void)
-{
-	size_t i;
-
-	for (i = 0; i < CC_COUNT_OF(cheats); ++i)
-		if (cheats[i].enabled && Cheat_IsROMCheat(&cheats[i].code))
-			rom[cheats[i].code.address / 2] = cheats[i].code.value;
-}
-
-static void Cheat_ApplyRAMPatches(void)
-{
-	size_t i;
-
-	for (i = 0; i < CC_COUNT_OF(cheats); ++i)
-		if (cheats[i].enabled && Cheat_IsRAMCheat(&cheats[i].code))
-			clownmdemu.state.m68k.ram[(cheats[i].code.address / 2) % CC_COUNT_OF(clownmdemu.state.m68k.ram)] = cheats[i].code.value;
-}
-
-static void Cheat_AddCheat(const unsigned int index, const bool enabled, const char* const code)
-{
-	Cheat_DecodedCheat decoded_cheat;
-
-	if (index >= CC_COUNT_OF(cheats))
-	{
-		libretro_callbacks.log(RETRO_LOG_ERROR, "Cheat code %u (%s) has an index which exceeds the size of the cheat code buffer (%lu)!\n", index, code, (unsigned long)CC_COUNT_OF(cheats));
-	}
-	else if (!Cheat_DecodeGameGenie(&decoded_cheat, code) && !Cheat_DecodeActionReplay(&decoded_cheat, code))
-	{
-		libretro_callbacks.log(RETRO_LOG_ERROR, "Cheat code '%s' is in an unrecognised format.\n", code);
-	}
-	else
-	{
-		libretro_callbacks.log(RETRO_LOG_INFO, "Cheat code %u (%s) decoded to '%06lX-%04X'.\n", index, code, decoded_cheat.address, decoded_cheat.value);
-
-		if (decoded_cheat.address % 2 != 0)
-		{
-			libretro_callbacks.log(RETRO_LOG_ERROR, "Cheat code %u (%s) decodes to an odd address (0x%06lX), which is invalid!\n", index, code, decoded_cheat.address);
-		}
-		else if (!Cheat_IsROMCheat(&decoded_cheat) && !Cheat_IsRAMCheat(&decoded_cheat))
-		{
-			libretro_callbacks.log(RETRO_LOG_ERROR, "Cheat code %u (%s) decodes to an unsupported address range (0x%06lX)!\n", index, code, decoded_cheat.address);
-		}
-		else
-		{
-			/* Code is valid; add to the list. */
-			cheats[index].code = decoded_cheat;
-			if (Cheat_IsROMCheat(&decoded_cheat))
-				cheats[index].old_rom_value = rom[decoded_cheat.address / 2];
-			cheats[index].enabled = enabled;
-		}
-	}
-}
-
 void retro_cheat_reset(void)
 {
 	libretro_callbacks.log(RETRO_LOG_INFO, "Resetting cheat codes.\n");
-	Cheat_UndoROMPatches();
-	memset(&cheats, 0, sizeof(cheats));
+	Cheat_ResetCheats(rom, rom_length);
 }
 
 void retro_cheat_set(const unsigned int index, const bool enabled, const char* const code)
 {
-	Cheat_UndoROMPatches();
-	Cheat_AddCheat(index, enabled, code);
-	Cheat_ApplyROMPatches();
+	if (!Cheat_AddCheat(rom, rom_length, index, enabled, code))
+		libretro_callbacks.log(RETRO_LOG_ERROR, "Failed to %s cheat code %u (%s).\n", enabled ? "enable" : "disable", index, code);
 }
