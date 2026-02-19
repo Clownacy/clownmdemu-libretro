@@ -1713,7 +1713,7 @@ static void Cheat_AddCheat(const unsigned int index, const bool enabled, const c
 		}
 		else if (!Cheat_IsROMCheat(&decoded_cheat) && !Cheat_IsRAMCheat(&decoded_cheat))
 		{
-			libretro_callbacks.log(RETRO_LOG_ERROR, "Cheat code %u (%s) decodes to an supported address range (0x%06lX)!\n", index, code, decoded_cheat.address);
+			libretro_callbacks.log(RETRO_LOG_ERROR, "Cheat code %u (%s) decodes to an unsupported address range (0x%06lX)!\n", index, code, decoded_cheat.address);
 		}
 		else
 		{
