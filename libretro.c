@@ -1508,7 +1508,7 @@ static struct
 {
 	Cheat_DecodedCheat code;
 	unsigned short old_rom_value;
-	cc_bool enabled;
+	bool enabled;
 } cheats[0x100];
 
 #define Cheat_IsROMCheat(CHEAT) (((CHEAT)->address & 0xFFFFFF) < rom_length * 2)
