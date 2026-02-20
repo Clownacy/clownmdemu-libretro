@@ -1502,6 +1502,19 @@ void retro_cheat_reset(void)
 
 void retro_cheat_set(const unsigned int index, const bool enabled, const char* const code)
 {
-	if (!Cheat_AddCheat(rom, rom_length, index, enabled, code))
+	Cheat_DecodedCheat decoded_cheat;
+
+	if (!Cheat_DecodeCheat(&decoded_cheat, code))
+	{
+		libretro_callbacks.log(RETRO_LOG_ERROR, "Failed to decode cheat code %u (%s).\n", index, code);
+		return;
+	}
+
+	libretro_callbacks.log(RETRO_LOG_INFO, "Cheat code %u (%s) decoded to '%06lX-%04X'.\n", index, code, decoded_cheat.address, decoded_cheat.value);
+
+	if (!Cheat_AddDecodedCheat(rom, rom_length, index, enabled, &decoded_cheat))
+	{
 		libretro_callbacks.log(RETRO_LOG_ERROR, "Failed to %s cheat code %u (%s).\n", enabled ? "enable" : "disable", index, code);
+		return;
+	}
 }
