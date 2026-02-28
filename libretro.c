@@ -844,6 +844,22 @@ static int DoOptionNumerical(const char* const key)
 	return 0;
 }
 
+static ControllerManager_Protocol DoOptionInputProtocol(const char* const key)
+{
+	struct retro_variable variable;
+
+	variable.key = key;
+	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_VARIABLE, (void*)&variable) && variable.value != NULL)
+	{
+		if (strcmp(variable.value, "standard") == 0)
+			return CONTROLLER_MANAGER_PROTOCOL_STANDARD;
+		if (strcmp(variable.value, "ea") == 0)
+			return CONTROLLER_MANAGER_PROTOCOL_EA_4_WAY_PLAY;
+	}
+
+	return CONTROLLER_MANAGER_PROTOCOL_STANDARD;
+}
+
 static void UpdateOptions(const cc_bool only_update_flags)
 {
 	const cc_bool pal_mode_changed = pal_mode_enabled != DoOptionBoolean("clownmdemu_tv_standard", "pal");
@@ -868,6 +884,7 @@ static void UpdateOptions(const cc_bool only_update_flags)
 	clownmdemu.configuration.tv_standard                      =  pal_mode_enabled ? CLOWNMDEMU_TV_STANDARD_PAL : CLOWNMDEMU_TV_STANDARD_NTSC;
 	clownmdemu.configuration.low_pass_filter_disabled         = !DoOptionBoolean("clownmdemu_lowpass_filter", "enabled");
 	clownmdemu.configuration.cd_add_on_enabled                =  DoOptionBoolean("clownmdemu_cd_addon", "enabled");
+	clownmdemu.controller_manager.configuration.protocol      =  DoOptionInputProtocol("clownmdemu_input_protocol");
 	clownmdemu.vdp.configuration.sprites_disabled             =  DoOptionBoolean("clownmdemu_disable_sprite_plane", "enabled");
 	clownmdemu.vdp.configuration.window_disabled              =  DoOptionBoolean("clownmdemu_disable_window_plane", "enabled");
 	clownmdemu.vdp.configuration.planes_disabled[0]           =  DoOptionBoolean("clownmdemu_disable_plane_a", "enabled");
@@ -1156,33 +1173,25 @@ void retro_set_environment(const retro_environment_t environment_callback)
 
 	/* Give the buttons proper names. */
 	{
+		#define DO_INPUT_DESCRIPTOR(PORT) \
+			{ PORT, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "Up"    }, \
+			{ PORT, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "Down"  }, \
+			{ PORT, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left"  }, \
+			{ PORT, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "Right" }, \
+			{ PORT, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "A"     }, \
+			{ PORT, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B"     }, \
+			{ PORT, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "C"     }, \
+			{ PORT, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "X"     }, \
+			{ PORT, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Y"     }, \
+			{ PORT, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "Z"     }, \
+			{ PORT, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" }, \
+			{ PORT, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Mode"  }
+
 		static const struct retro_input_descriptor desc[] = {
-			/* Player 1. */
-			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "Up"    },
-			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "Down"  },
-			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left"  },
-			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "Right" },
-			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "A"     },
-			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B"     },
-			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "C"     },
-			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "X"     },
-			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Y"     },
-			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "Z"     },
-			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-			{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Mode"  },
-			/* Player 2. */
-			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "Up"    },
-			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "Down"  },
-			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left"  },
-			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "Right" },
-			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "A"     },
-			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B"     },
-			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "C"     },
-			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "X"     },
-			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Y"     },
-			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "Z"     },
-			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-			{ 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Mode"  },
+			DO_INPUT_DESCRIPTOR(0),
+			DO_INPUT_DESCRIPTOR(1),
+			DO_INPUT_DESCRIPTOR(2),
+			DO_INPUT_DESCRIPTOR(3),
 			/* End. */
 			{ 0, 0, 0, 0, NULL }
 		};

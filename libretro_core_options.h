@@ -377,6 +377,28 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 	},
 	{
 		/* Key. */
+		"clownmdemu_input_protocol",
+		/* Label. */
+		"Console > Input Protocol",
+		/* Categorised label. */
+		"Input Protocol",
+		/* Description. */
+		"Which method to read control pad inputs. Not all games support non-standard protocols.",
+		/* Categorised description. */
+		NULL,
+		/* Category. */
+		"console",
+		/* Values. */
+		{
+			{"standard", "Standard (2 Players Maximum)"},
+			{"ea", "EA 4-Way Play (4 Players Maximum)"},
+			{NULL, NULL},
+		},
+		/* Default value. */
+		"standard"
+	},
+	{
+		/* Key. */
 		"clownmdemu_cd_addon",
 		/* Label. */
 		"Console > CD Add-on",
