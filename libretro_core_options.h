@@ -391,7 +391,8 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		/* Values. */
 		{
 			{"standard", "Standard (2 Players Maximum)"},
-			{"ea", "EA 4-Way Play (4 Players Maximum)"},
+			{"sega", "Multi (8 Players Maximum)"},
+			{"ea", "Extra (4 Players Maximum)"},
 			{NULL, NULL},
 		},
 		/* Default value. */

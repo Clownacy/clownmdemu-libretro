@@ -853,6 +853,8 @@ static ControllerManager_Protocol DoOptionInputProtocol(const char* const key)
 	{
 		if (strcmp(variable.value, "standard") == 0)
 			return CONTROLLER_MANAGER_PROTOCOL_STANDARD;
+		if (strcmp(variable.value, "sega") == 0)
+			return CONTROLLER_MANAGER_PROTOCOL_SEGA_TAP;
 		if (strcmp(variable.value, "ea") == 0)
 			return CONTROLLER_MANAGER_PROTOCOL_EA_4_WAY_PLAY;
 	}
@@ -1192,6 +1194,10 @@ void retro_set_environment(const retro_environment_t environment_callback)
 			DO_INPUT_DESCRIPTOR(1),
 			DO_INPUT_DESCRIPTOR(2),
 			DO_INPUT_DESCRIPTOR(3),
+			DO_INPUT_DESCRIPTOR(4),
+			DO_INPUT_DESCRIPTOR(5),
+			DO_INPUT_DESCRIPTOR(6),
+			DO_INPUT_DESCRIPTOR(7),
 			/* End. */
 			{ 0, 0, 0, 0, NULL }
 		};
