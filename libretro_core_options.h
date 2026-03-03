@@ -368,8 +368,8 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		"console",
 		/* Values. */
 		{
-			{"elsewhere", "Overseas (Elsewhere)"},
-			{"japan", "Domestic (Japan)"},
+			{"elsewhere", "International"},
+			{"japan", "Japan"},
 			{NULL, NULL},
 		},
 		/* Default value. */
