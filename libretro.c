@@ -54,6 +54,7 @@ static cc_u16l *rom;
 static size_t rom_length;
 
 static CDReader_State cd_reader;
+static CheatManager cheat_manager;
 
 static cc_bool pal_mode_enabled;
 
@@ -1287,7 +1288,7 @@ void retro_run(void)
 
 	Mixer_Begin(&mixer);
 
-	Cheat_ApplyRAMPatches(&clownmdemu);
+	CheatManager_ApplyRAMPatches(&cheat_manager, &clownmdemu);
 	ClownMDEmu_Iterate(&clownmdemu);
 
 	Mixer_End(&mixer, MixerCompleteCallback, NULL);
@@ -1512,14 +1513,14 @@ size_t retro_get_memory_size(const unsigned int id)
 void retro_cheat_reset(void)
 {
 	libretro_callbacks.log(RETRO_LOG_INFO, "Resetting cheat codes.\n");
-	Cheat_ResetCheats(rom, rom_length);
+	CheatManager_ResetCheats(&cheat_manager, rom, rom_length);
 }
 
 void retro_cheat_set(const unsigned int index, const bool enabled, const char* const code)
 {
-	Cheat_DecodedCheat decoded_cheat;
+	CheatManager_DecodedCheat decoded_cheat;
 
-	if (!Cheat_DecodeCheat(&decoded_cheat, code))
+	if (!CheatManager_DecodeCheat(&decoded_cheat, code))
 	{
 		libretro_callbacks.log(RETRO_LOG_ERROR, "Failed to decode cheat code %u (%s).\n", index, code);
 		return;
@@ -1527,7 +1528,7 @@ void retro_cheat_set(const unsigned int index, const bool enabled, const char* c
 
 	libretro_callbacks.log(RETRO_LOG_INFO, "Cheat code %u (%s) decoded to '%06lX-%04X'.\n", index, code, decoded_cheat.address, decoded_cheat.value);
 
-	if (!Cheat_AddDecodedCheat(rom, rom_length, index, enabled, &decoded_cheat))
+	if (!CheatManager_AddDecodedCheat(&cheat_manager, rom, rom_length, index, enabled, &decoded_cheat))
 	{
 		libretro_callbacks.log(RETRO_LOG_ERROR, "Failed to %s cheat code %u (%s).\n", enabled ? "enable" : "disable", index, code);
 		return;
