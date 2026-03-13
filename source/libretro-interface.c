@@ -1,14 +1,13 @@
+#include "libretro-interface.h"
+
 #include <assert.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-/* For file IO stuff. */
-#include <stdlib.h>
-
 #include "libretro.h"
-#include "libretro_core_options.h"
 #include "retro_endianness.h"
 
 #include "../common/cd-reader.h"
@@ -17,6 +16,10 @@
 
 #define MIXER_IMPLEMENTATION
 #include "../common/mixer.h"
+
+#include "clowncd-callbacks.h"
+#include "file-io.h"
+#include "libretro_core_options.h"
 
 #define FRAMEBUFFER_WIDTH VDP_MAX_SCANLINE_WIDTH
 #define FRAMEBUFFER_HEIGHT VDP_MAX_SCANLINES
@@ -60,16 +63,7 @@ static cc_bool pal_mode_enabled;
 
 static struct retro_vfs_file_handle *buram_file_handle;
 
-static struct
-{
-	retro_environment_t        environment;
-	retro_video_refresh_t      video;
-	retro_audio_sample_t       audio;
-	retro_audio_sample_batch_t audio_batch;
-	retro_input_poll_t         input_poll;
-	retro_input_state_t        input_state;
-	CC_ATTRIBUTE_PRINTF(2, 3) retro_log_printf_t log;
-} libretro_callbacks;
+LibretroCallbacks libretro_callbacks;
 
 /************/
 /* Geometry */
@@ -140,199 +134,6 @@ static void Geometry_SetTallInterlaceMode2(const cc_bool tall_interlace_mode_2)
 /***********/
 /* File IO */
 /***********/
-
-static retro_vfs_open_t File_Open;
-static retro_vfs_close_t File_Close;
-static retro_vfs_size_t File_GetSize;
-static retro_vfs_tell_t File_Tell;
-static retro_vfs_seek_t File_Seek;
-static retro_vfs_read_t File_Read;
-static retro_vfs_write_t File_Write;
-static retro_vfs_remove_t File_Remove;
-
-static struct retro_vfs_file_handle* RETRO_CALLCONV File_OpenDefault(const char* const path, const unsigned int mode, const unsigned int hints)
-{
-	const char* mode_standard;
-
-	(void)hints;
-
-	switch (mode)
-	{
-		case RETRO_VFS_FILE_ACCESS_READ:
-		case RETRO_VFS_FILE_ACCESS_READ | RETRO_VFS_FILE_ACCESS_UPDATE_EXISTING:
-			mode_standard = "rb";
-			break;
-
-		case RETRO_VFS_FILE_ACCESS_WRITE:
-			mode_standard = "wb";
-			break;
-
-		case RETRO_VFS_FILE_ACCESS_WRITE | RETRO_VFS_FILE_ACCESS_UPDATE_EXISTING:
-		case RETRO_VFS_FILE_ACCESS_READ | RETRO_VFS_FILE_ACCESS_WRITE | RETRO_VFS_FILE_ACCESS_UPDATE_EXISTING:
-			mode_standard = "r+b";
-			break;
-
-		case RETRO_VFS_FILE_ACCESS_READ | RETRO_VFS_FILE_ACCESS_WRITE:
-			mode_standard = "w+b";
-			break;
-
-		default:
-			return NULL;
-	}
-
-	return (struct retro_vfs_file_handle*)fopen(path, mode_standard);
-}
-
-static int RETRO_CALLCONV File_CloseDefault(struct retro_vfs_file_handle* const stream)
-{
-	if (stream == NULL)
-		return -1;
-
-	return fclose((FILE*)stream) == 0 ? 0 : -1;
-}
-
-
-static int64_t RETRO_CALLCONV File_GetSizeDefault(struct retro_vfs_file_handle* const stream)
-{
-	FILE* const file = (FILE*)stream;
-	fpos_t position;
-	int64_t result = -1;
-
-	if (fgetpos(file, &position) == 0)
-	{
-		if (fseek(file, 0, SEEK_END) == 0)
-			result = ftell(file);
-
-		if (fsetpos(file, &position) != 0)
-			result = -1;
-	}
-
-	return result;
-}
-
-static int64_t RETRO_CALLCONV File_TellDefault(struct retro_vfs_file_handle* const stream)
-{
-	return ftell((FILE*)stream);
-}
-
-static int64_t RETRO_CALLCONV File_SeekDefault(struct retro_vfs_file_handle* const stream, const int64_t offset, const int seek_position)
-{
-	int whence;
-
-	if (offset < LONG_MIN || offset > LONG_MAX)
-		return -1;
-
-	switch (seek_position)
-	{
-		case RETRO_VFS_SEEK_POSITION_START:
-			whence = SEEK_SET;
-			break;
-
-		case RETRO_VFS_SEEK_POSITION_CURRENT:
-			whence = SEEK_CUR;
-			break;
-
-		case RETRO_VFS_SEEK_POSITION_END:
-			whence = SEEK_END;
-			break;
-
-		default:
-			return -1;
-	}
-
-	if (fseek((FILE*)stream, offset, whence) != 0)
-		return -1;
-
-	return File_TellDefault(stream);
-}
-
-static int64_t RETRO_CALLCONV File_ReadDefault(struct retro_vfs_file_handle* const stream, void* const s, const uint64_t len)
-{
-	if (len > (size_t)-1)
-		return -1;
-
-	return fread(s, 1, len, (FILE*)stream);
-}
-
-static int64_t RETRO_CALLCONV File_WriteDefault(struct retro_vfs_file_handle* const stream, const void* const s, const uint64_t len)
-{
-	if (len > (size_t)-1)
-		return -1;
-
-	return fwrite(s, 1, len, (FILE*)stream);
-}
-
-static int RETRO_CALLCONV File_RemoveDefault(const char* const path)
-{
-	return remove(path);
-}
-
-static void LoadFileIOCallbacks(void)
-{
-	struct retro_vfs_interface_info info;
-
-	info.required_interface_version = 1;
-
-	if (libretro_callbacks.environment(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, (void*)&info))
-	{
-		File_Open    = info.iface->open;
-		File_Close   = info.iface->close;
-		File_GetSize = info.iface->size;
-		File_Tell    = info.iface->tell;
-		File_Seek    = info.iface->seek;
-		File_Read    = info.iface->read;
-		File_Write   = info.iface->write;
-		File_Remove  = info.iface->remove;
-	}
-	else
-	{
-		File_Open    = File_OpenDefault;
-		File_Close   = File_CloseDefault;
-		File_GetSize = File_GetSizeDefault;
-		File_Tell    = File_TellDefault;
-		File_Seek    = File_SeekDefault;
-		File_Read    = File_ReadDefault;
-		File_Write   = File_WriteDefault;
-		File_Remove  = File_RemoveDefault;
-	}
-}
-
-static bool LoadFileToBuffer(const char* const path, unsigned char** const output_file_buffer, size_t* const output_file_size)
-{
-	bool success = false;
-	struct retro_vfs_file_handle* const file = File_Open(path, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
-
-	if (file != NULL)
-	{
-		const int64_t file_size = File_GetSize(file);
-
-		if (file_size >= 0)
-		{
-			unsigned char *file_buffer = (unsigned char*)malloc((size_t)file_size);
-
-			if (file_buffer != NULL)
-			{
-				if (File_Seek(file, 0, RETRO_VFS_SEEK_POSITION_START) == 0)
-				{
-					if (File_Read(file, file_buffer, file_size) == file_size)
-					{
-						*output_file_buffer = file_buffer;
-						*output_file_size = file_size;
-						file_buffer = NULL;
-
-						success = true;
-					}
-				}
-
-				free(file_buffer);
-			}
-		}
-
-		File_Close(file);
-	}
-
-	return success;
-}
 
 static bool CreateROMBuffer(const unsigned char* const input_buffer, const size_t input_buffer_length, cc_u16l** const output_buffer, size_t* const output_buffer_length)
 {
@@ -921,110 +722,6 @@ static void UpdateOptions(const cc_bool only_update_flags)
 	clownmdemu.mega_cd.pcm.configuration.channels_disabled[7] =  DoOptionBoolean("clownmdemu_disable_pcm8", "enabled");
 	clownmdemu.mega_cd.cdda.configuration.disabled            =  DoOptionBoolean("clownmdemu_disable_cdda", "enabled");
 }
-
-/************************/
-/* ClownCD IO Callbacks */
-/************************/
-
-static void* ClownCDFileOpen(const char* const filename, const ClownCD_FileMode mode)
-{
-	int libretro_mode;
-
-	switch (mode)
-	{
-		case CLOWNCD_RB:
-			libretro_mode = RETRO_VFS_FILE_ACCESS_READ;
-			break;
-
-		case CLOWNCD_WB:
-			libretro_mode = RETRO_VFS_FILE_ACCESS_WRITE;
-			break;
-
-		default:
-			return NULL;
-	}
-
-	return File_Open(filename, libretro_mode, RETRO_VFS_FILE_ACCESS_HINT_NONE);
-}
-
-static int ClownCDFileClose(void* const stream)
-{
-	return File_Close((struct retro_vfs_file_handle*)stream);
-}
-
-static size_t ClownCDFileRead(void* const buffer, const size_t size, const size_t count, void* const stream)
-{
-	int64_t total_read;
-
-	if (size == 0 || count == 0)
-		return 0;
-
-	total_read = File_Read((struct retro_vfs_file_handle*)stream, buffer, size * count) / size;
-
-	if (total_read < 0 || (uint64_t)total_read > (size_t)-1)
-		return 0;
-
-	return total_read;
-}
-
-static size_t ClownCDFileWrite(const void* const buffer, const size_t size, const size_t count, void* const stream)
-{
-	int64_t total_written;
-
-	if (size == 0 || count == 0)
-		return 0;
-
-	total_written = File_Write((struct retro_vfs_file_handle*)stream, buffer, size * count) / size;
-
-	if (total_written < 0 || (uint64_t)total_written > (size_t)-1)
-		return 0;
-
-	return total_written;
-}
-
-static long ClownCDFileTell(void* const stream)
-{
-	const int64_t position = File_Tell((struct retro_vfs_file_handle*)stream);
-
-	if (position < 0 || position > LONG_MAX)
-		return -1;
-
-	return position;
-}
-
-static int ClownCDFileSeek(void* const stream, const long position, const ClownCD_FileOrigin origin)
-{
-	int libretro_origin;
-
-	switch (origin)
-	{
-		case CLOWNCD_SEEK_SET:
-			libretro_origin = RETRO_VFS_SEEK_POSITION_START;
-			break;
-
-		case CLOWNCD_SEEK_CUR:
-			libretro_origin = RETRO_VFS_SEEK_POSITION_CURRENT;
-			break;
-
-		case CLOWNCD_SEEK_END:
-			libretro_origin = RETRO_VFS_SEEK_POSITION_END;
-			break;
-
-		default:
-			return -1;
-	}
-
-	return File_Seek((struct retro_vfs_file_handle*)stream, position, libretro_origin) == -1 ? -1 : 0;
-}
-
-static const ClownCD_FileCallbacks clowncd_callbacks = {
-	ClownCDFileOpen,
-	ClownCDFileClose,
-	ClownCDFileRead,
-	ClownCDFileWrite,
-	ClownCDFileTell,
-	ClownCDFileSeek
-};
 
 /****************/
 /* libretro API */

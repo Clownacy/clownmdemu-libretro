@@ -13,7 +13,13 @@ if(UNITY_BUILD)
 	)
 else()
 	add_library(clownmdemu_libretro
-		"source/libretro.c"
+		"source/clowncd-callbacks.c"
+		"source/clowncd-callbacks.h"
+		"source/file-io.c"
+		"source/file-io.h"
+		"source/libretro_core_options.h"
+		"source/libretro-interface.c"
+		"source/libretro-interface.h"
 	)
 
 	add_subdirectory("common" EXCLUDE_FROM_ALL)
