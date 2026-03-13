@@ -13,7 +13,7 @@
 
 #include "common/cd-reader.h"
 #include "common/cheat.h"
-#include "common/core/clownmdemu.h"
+#include "common/core/source/clownmdemu.h"
 
 #define MIXER_IMPLEMENTATION
 #include "common/mixer.h"
