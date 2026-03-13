@@ -1,5 +1,5 @@
-# Makefile objects.
-/objects
+# Makefile object.
+/unity.o
 
 # Makefile compiled output.
 /clownmdemu_libretro.*
