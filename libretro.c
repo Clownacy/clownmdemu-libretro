@@ -91,11 +91,6 @@ static void Geometry_Export(struct retro_game_geometry* const output)
 	output->max_height   = FRAMEBUFFER_HEIGHT;
 	output->aspect_ratio = (float)geometry.current_screen_width / (float)geometry.current_screen_height;
 
-	/* Correct the aspect ratio of the rendered frame. */
-	/* (256x224 and 320x240 should be the same width, but 320x224 and 320x240 should be different heights - this matches the behaviour of a real Mega Drive). */
-	if (!clownmdemu.vdp.state.h40_enabled)
-		output->aspect_ratio = output->aspect_ratio * VDP_H40_SCREEN_WIDTH_IN_TILE_PAIRS / VDP_H32_SCREEN_WIDTH_IN_TILE_PAIRS;
-
 	/* Squish the aspect ratio vertically when in Interlace Mode 2. */
 	if (clownmdemu.vdp.state.double_resolution_enabled && !geometry.tall_interlace_mode_2)
 		output->aspect_ratio *= 2.0f;
@@ -110,6 +105,12 @@ static void Geometry_Update(void)
 		{
 			struct retro_game_geometry geometry;
 			Geometry_Export(&geometry);
+
+			/* Correct the aspect ratio of the rendered frame. */
+			/* (256x224 and 320x240 should be the same width, but 320x224 and 320x240 should be different heights - this matches the behaviour of a real Mega Drive). */
+			if (!clownmdemu.vdp.state.h40_enabled)
+				geometry.aspect_ratio = geometry.aspect_ratio * VDP_H40_SCREEN_WIDTH_IN_TILE_PAIRS / VDP_H32_SCREEN_WIDTH_IN_TILE_PAIRS;
+
 			libretro_callbacks.environment(RETRO_ENVIRONMENT_SET_GEOMETRY, (void*)&geometry);
 		}
 	}
@@ -1140,7 +1141,7 @@ void retro_get_system_av_info(struct retro_system_av_info* const info)
 	}
 
 	/* Initialise these to avoid a division by 0 in Geometry_Export. */
-	Geometry_SetScreenSize(VDP_H40_SCREEN_WIDTH_IN_TILE_PAIRS * VDP_TILE_PAIR_WIDTH, VDP_V28_SCANLINES_IN_TILES * VDP_STANDARD_TILE_HEIGHT);
+	Geometry_SetScreenSize((VDP_H40_SCREEN_WIDTH_IN_TILES + clownmdemu.vdp.configuration.widescreen_tiles * 2) * VDP_TILE_WIDTH, VDP_V28_SCANLINES_IN_TILES * VDP_STANDARD_TILE_HEIGHT);
 
 	/* Populate the 'retro_system_av_info' struct. */
 	Geometry_Export(&info->geometry);
