@@ -89,10 +89,15 @@ static void Geometry_Export(struct retro_game_geometry* const output)
 	output->base_height  = geometry.current_screen_height;
 	output->max_width    = FRAMEBUFFER_WIDTH;
 	output->max_height   = FRAMEBUFFER_HEIGHT;
-	output->aspect_ratio = ((VDP_H40_SCREEN_WIDTH_IN_TILES + clownmdemu.vdp.configuration.widescreen_tiles * 2) * VDP_TILE_WIDTH) / (float)geometry.current_screen_height;
+	output->aspect_ratio = (float)geometry.current_screen_width / (float)geometry.current_screen_height;
+
+	/* Correct the aspect ratio of the rendered frame. */
+	/* (256x224 and 320x240 should be the same width, but 320x224 and 320x240 should be different heights - this matches the behaviour of a real Mega Drive). */
+	if (!clownmdemu.vdp.state.h40_enabled)
+		output->aspect_ratio = output->aspect_ratio * VDP_H40_SCREEN_WIDTH_IN_TILE_PAIRS / VDP_H32_SCREEN_WIDTH_IN_TILE_PAIRS;
 
 	/* Squish the aspect ratio vertically when in Interlace Mode 2. */
-	if (!geometry.tall_interlace_mode_2 && geometry.current_screen_height >= VDP_V28_SCANLINES_IN_TILES * VDP_INTERLACE_MODE_2_TILE_HEIGHT)
+	if (clownmdemu.vdp.state.double_resolution_enabled && !geometry.tall_interlace_mode_2)
 		output->aspect_ratio *= 2.0f;
 }
 
