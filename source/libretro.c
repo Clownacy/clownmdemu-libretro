@@ -11,12 +11,12 @@
 #include "libretro_core_options.h"
 #include "retro_endianness.h"
 
-#include "common/cd-reader.h"
-#include "common/cheat.h"
-#include "common/core/source/clownmdemu.h"
+#include "../common/cd-reader.h"
+#include "../common/cheat.h"
+#include "../common/core/source/clownmdemu.h"
 
 #define MIXER_IMPLEMENTATION
-#include "common/mixer.h"
+#include "../common/mixer.h"
 
 #define FRAMEBUFFER_WIDTH VDP_MAX_SCANLINE_WIDTH
 #define FRAMEBUFFER_HEIGHT VDP_MAX_SCANLINES
