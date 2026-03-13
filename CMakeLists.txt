@@ -1,15 +1,24 @@
 cmake_minimum_required(VERSION 3.0...3.16.3)
 
 option(BUILD_SHARED_LIBS "Create a shared library instead of a static library." ON)
+option(UNITY_BUILD "Perform a unity-build, to produce a single self-contained library file." OFF)
 
 project(clownmdemu_libretro LANGUAGES C)
 
-# Sources.
-# A unity build must be used so that static builds produce a single static library,
-# as libretro's CI does not account for more than one static library being produced.
-add_library(clownmdemu_libretro
-	"unity.c"
-)
+if(UNITY_BUILD)
+	# A unity build must be used so that static builds produce a single static library,
+	# as libretro's CI does not account for more than one static library being produced.
+	add_library(clownmdemu_libretro
+		"unity.c"
+	)
+else()
+	add_library(clownmdemu_libretro
+		"source/libretro.c"
+	)
+
+	add_subdirectory("common" EXCLUDE_FROM_ALL)
+	target_link_libraries(clownmdemu_libretro PRIVATE clownmdemu-frontend-common)
+endif()
 
 # Only require C90.
 # Do not prevent extensions, since some may optionally
