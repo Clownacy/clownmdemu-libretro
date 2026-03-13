@@ -19,7 +19,7 @@
 
 #include "clowncd-callbacks.h"
 #include "file-io.h"
-#include "libretro_core_options.h"
+#include "options.h"
 
 #define FRAMEBUFFER_WIDTH VDP_MAX_SCANLINE_WIDTH
 #define FRAMEBUFFER_HEIGHT VDP_MAX_SCANLINES

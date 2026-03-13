@@ -17,9 +17,9 @@ else()
 		"source/clowncd-callbacks.h"
 		"source/file-io.c"
 		"source/file-io.h"
-		"source/libretro_core_options.h"
 		"source/libretro-interface.c"
 		"source/libretro-interface.h"
+		"source/options.h"
 	)
 
 	add_subdirectory("common" EXCLUDE_FROM_ALL)
