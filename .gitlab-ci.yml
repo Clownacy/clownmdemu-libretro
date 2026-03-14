@@ -9,7 +9,7 @@
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
     CORENAME: clownmdemu
-    CORE_ARGS: -UNITY_BUILD=ON
+    CORE_ARGS: -DUNITY_BUILD=ON
 
 # Inclusion templates, required for the build to work
 include:
