@@ -5,8 +5,10 @@ option(UNITY_BUILD "Perform a unity-build, to produce a single self-contained li
 
 project(clownmdemu_libretro LANGUAGES C)
 
-# Avoid some relocation-related linker errors when building a shared library that depends on static libraries.
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+if(BUILD_SHARED_LIBS)
+	# Avoid some relocation-related linker errors when building a shared library that depends on static libraries.
+	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
 
 if(UNITY_BUILD)
 	# A unity build must be used so that static builds produce a single static library,
