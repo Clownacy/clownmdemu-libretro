@@ -20,12 +20,12 @@ static void* ClownCDFileOpen(const char* const filename, const ClownCD_FileMode 
 			return NULL;
 	}
 
-	return File_Open(filename, libretro_mode, RETRO_VFS_FILE_ACCESS_HINT_NONE);
+	return file_io.open(filename, libretro_mode, RETRO_VFS_FILE_ACCESS_HINT_NONE);
 }
 
 static int ClownCDFileClose(void* const stream)
 {
-	return File_Close((struct retro_vfs_file_handle*)stream);
+	return file_io.close((struct retro_vfs_file_handle*)stream);
 }
 
 static size_t ClownCDFileRead(void* const buffer, const size_t size, const size_t count, void* const stream)
@@ -35,7 +35,7 @@ static size_t ClownCDFileRead(void* const buffer, const size_t size, const size_
 	if (size == 0 || count == 0)
 		return 0;
 
-	total_read = File_Read((struct retro_vfs_file_handle*)stream, buffer, size * count) / size;
+	total_read = file_io.read((struct retro_vfs_file_handle*)stream, buffer, size * count) / size;
 
 	if (total_read < 0 || (uint64_t)total_read > (size_t)-1)
 		return 0;
@@ -50,7 +50,7 @@ static size_t ClownCDFileWrite(const void* const buffer, const size_t size, cons
 	if (size == 0 || count == 0)
 		return 0;
 
-	total_written = File_Write((struct retro_vfs_file_handle*)stream, buffer, size * count) / size;
+	total_written = file_io.write((struct retro_vfs_file_handle*)stream, buffer, size * count) / size;
 
 	if (total_written < 0 || (uint64_t)total_written > (size_t)-1)
 		return 0;
@@ -60,7 +60,7 @@ static size_t ClownCDFileWrite(const void* const buffer, const size_t size, cons
 
 static long ClownCDFileTell(void* const stream)
 {
-	const int64_t position = File_Tell((struct retro_vfs_file_handle*)stream);
+	const int64_t position = file_io.tell((struct retro_vfs_file_handle*)stream);
 
 	if (position < 0 || position > LONG_MAX)
 		return -1;
@@ -90,7 +90,7 @@ static int ClownCDFileSeek(void* const stream, const long position, const ClownC
 			return -1;
 	}
 
-	return File_Seek((struct retro_vfs_file_handle*)stream, position, libretro_origin) == -1 ? -1 : 0;
+	return file_io.seek((struct retro_vfs_file_handle*)stream, position, libretro_origin) == -1 ? -1 : 0;
 }
 
 const ClownCD_FileCallbacks clowncd_callbacks = {

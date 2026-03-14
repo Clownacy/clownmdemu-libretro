@@ -481,7 +481,7 @@ static cc_bool SaveFileOpened(void* const user_data, const char* const filename,
 
 	if (path != NULL)
 	{
-		buram_file_handle = File_Open(path, read_or_write ? RETRO_VFS_FILE_ACCESS_WRITE : RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
+		buram_file_handle = file_io.open(path, read_or_write ? RETRO_VFS_FILE_ACCESS_WRITE : RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
 		success = buram_file_handle != NULL;
 
 		free(path);
@@ -501,7 +501,7 @@ static cc_s16f SaveFileReadCallback(void* const user_data)
 
 	(void)user_data;
 
-	if (File_Read(buram_file_handle, &byte, 1) == 0)
+	if (file_io.read(buram_file_handle, &byte, 1) == 0)
 		return -1;
 
 	return byte;
@@ -518,14 +518,14 @@ static void SaveFileWrittenCallback(void* const user_data, const cc_u8f byte)
 
 	(void)user_data;
 
-	File_Write(buram_file_handle, &value, 1);
+	file_io.write(buram_file_handle, &value, 1);
 }
 
 static void SaveFileClosedCallback(void* const user_data)
 {
 	(void)user_data;
 
-	File_Close(buram_file_handle);
+	file_io.close(buram_file_handle);
 }
 
 static cc_bool SaveFileRemovedCallback(void* const user_data, const char* const filename)
@@ -538,7 +538,7 @@ static cc_bool SaveFileRemovedCallback(void* const user_data, const char* const 
 
 	if (path != NULL)
 	{
-		success = File_Remove(path) == 0;
+		success = file_io.remove(path) == 0;
 
 		free(path);
 	}
@@ -556,14 +556,14 @@ static cc_bool SaveFileSizeObtainedCallback(void* const user_data, const char* c
 
 	if (path != NULL)
 	{
-		struct retro_vfs_file_handle* const file = File_Open(path, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
+		struct retro_vfs_file_handle* const file = file_io.open(path, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
 
 		if (file != NULL)
 		{
-			*size = File_GetSize(file);
+			*size = file_io.get_size(file);
 			success = cc_true;
 
-			File_Close(file);
+			file_io.close(file);
 		}
 
 		free(path);

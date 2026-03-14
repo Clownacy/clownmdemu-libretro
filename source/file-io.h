@@ -5,14 +5,19 @@
 
 #include "libretro-interface.h"
 
-extern retro_vfs_open_t File_Open;
-extern retro_vfs_close_t File_Close;
-extern retro_vfs_size_t File_GetSize;
-extern retro_vfs_tell_t File_Tell;
-extern retro_vfs_seek_t File_Seek;
-extern retro_vfs_read_t File_Read;
-extern retro_vfs_write_t File_Write;
-extern retro_vfs_remove_t File_Remove;
+typedef struct FileFunctions
+{
+	retro_vfs_open_t open;
+	retro_vfs_close_t close;
+	retro_vfs_size_t get_size;
+	retro_vfs_tell_t tell;
+	retro_vfs_seek_t seek;
+	retro_vfs_read_t read;
+	retro_vfs_write_t write;
+	retro_vfs_remove_t remove;
+} FileFunctions;
+
+extern FileFunctions file_io;
 
 void LoadFileIOCallbacks(void);
 
