@@ -5,11 +5,6 @@ option(UNITY_BUILD "Perform a unity-build, to produce a single self-contained li
 
 project(clownmdemu_libretro LANGUAGES C)
 
-if(BUILD_SHARED_LIBS)
-	# Avoid some relocation-related linker errors when building a shared library that depends on static libraries.
-	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-endif()
-
 if(UNITY_BUILD)
 	# A unity build must be used so that static builds produce a single static library,
 	# as libretro's CI does not account for more than one static library being produced.
@@ -26,6 +21,12 @@ else()
 		"source/libretro-interface.h"
 		"source/options.h"
 	)
+
+	# Avoid some relocation-related linker errors when building a shared library that depends on static libraries.
+	get_target_property(CLOWNMDEMU_TARGET_TYPE clownmdemu_libretro TYPE)
+	if(CLOWNMDEMU_TARGET_TYPE STREQUAL SHARED_LIBRARY)
+		set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+	endif()
 
 	add_subdirectory("common" EXCLUDE_FROM_ALL)
 	target_link_libraries(clownmdemu_libretro PRIVATE clownmdemu-frontend-common)
