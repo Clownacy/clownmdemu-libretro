@@ -92,14 +92,14 @@ include:
   - project: 'libretro-infrastructure/ci-templates'
     file: '/dingux-cmake.yml'
 
-  # tvOS (AppleTV)
-  - project: 'libretro-infrastructure/ci-templates'
-    file: '/tvos-cmake.yml'
-
   #################################### MISC ##################################
   # Emscripten
   - project: 'libretro-infrastructure/ci-templates'
     file: '/emscripten-static-cmake.yml'
+
+  # tvOS (AppleTV)
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/tvos-cmake.yml'
 
 # Stages for building
 stages:
@@ -306,15 +306,15 @@ libretro-build-miyoo-arm32:
     - .libretro-miyoo-cmake-arm32
     - .core-defs
 
-# tvOS
-libretro-build-tvos-arm64:
-  extends:
-    - .libretro-tvos-cmake-arm64
-    - .core-defs
-
 #################################### MISC ##################################
 # Emscripten
 libretro-build-emscripten:
   extends:
     - .libretro-emscripten-static-cmake-retroarch-master
+    - .core-defs
+
+# tvOS
+libretro-build-tvos-arm64:
+  extends:
+    - .libretro-tvos-cmake-arm64
     - .core-defs
