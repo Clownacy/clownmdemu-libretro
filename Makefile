@@ -65,8 +65,8 @@ unixcygpath = /$(subst :,,$(call unixpath,$1))
 ifneq (,$(filter $(platform), unix unix-armv7-hardfloat-neon))
 	EXT?=so
    TARGET := $(TARGET_NAME)_libretro$(PLAT).$(EXT)
-   fpic := -fPIC
-   SHARED := -shared -Wl,--no-undefined
+   fpic := -fPIC -fvisibility=hidden
+   SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
 else ifeq ($(platform), linux-portable)
 	EXT?=so
    TARGET := $(TARGET_NAME)_libretro.$(EXT)
