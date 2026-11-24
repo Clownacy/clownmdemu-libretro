@@ -88,6 +88,10 @@ include:
   - project: 'libretro-infrastructure/ci-templates'
     file: '/libnx-static-cmake.yml'
 
+  # Nintendo Switch 2
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/libounce-cmake.yml'
+
   # OpenDingux
   - project: 'libretro-infrastructure/ci-templates'
     file: '/dingux-cmake.yml'
@@ -278,6 +282,12 @@ libretro-build-wiiu:
 libretro-build-libnx-aarch64:
   extends:
     - .libretro-libnx-static-cmake-retroarch-master
+    - .core-defs
+
+# Nintendo Switch 2
+libretro-build-libounce-aarch64:
+  extends:
+    - .libretro-libounce-cmake-aarch64
     - .core-defs
 
 # OpenDingux
