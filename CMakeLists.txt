@@ -70,9 +70,14 @@ set_target_properties(clownmdemu_libretro PROPERTIES OUTPUT_NAME "clownmdemu_lib
 if(LIBRETRO_STATIC AND EMSCRIPTEN)
 	# Emscripten builds are expected to use the '.bc' file extension instead of '.a'.
 	set_target_properties(clownmdemu_libretro PROPERTIES SUFFIX ".bc")
-elseif(NINTENDO_SWITCH2)
-	# Switch 2 builds need '.nro', but do not default to it.
-	set_target_properties(clownmdemu_libretro PROPERTIES SUFFIX ".nro")
+elseif(SWITCH2)
+	# Produces an elf with conversion to .nro below, we call it 'nro' to match produced DT_SONAME.
+	set_target_properties(clownmdemu_libretro PROPERTIES
+		PREFIX ""
+		OUTPUT_NAME "clownmdemu_libretro_libounce"
+		SUFFIX ".nro"
+	)
+	ounce_create_library_nro(clownmdemu_libretro)
 endif()
 
 # Obtain the Git revision so that it can be displayed in the core's version string.
