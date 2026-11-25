@@ -71,8 +71,9 @@ if(LIBRETRO_STATIC AND EMSCRIPTEN)
 	# Emscripten builds are expected to use the '.bc' file extension instead of '.a'.
 	set_target_properties(clownmdemu_libretro PROPERTIES SUFFIX ".bc")
 elseif(NINTENDO_SWITCH2)
-	# Switch 2 builds need '.nro', but do not default to it.
+	# Switch 2 builds need to be in the '.nro' format.
 	set_target_properties(clownmdemu_libretro PROPERTIES SUFFIX ".nro")
+	ounce_create_library_nro(clownmdemu_libretro)
 endif()
 
 # Obtain the Git revision so that it can be displayed in the core's version string.
