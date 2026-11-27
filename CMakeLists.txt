@@ -5,6 +5,24 @@ option(UNITY_BUILD "Perform a unity-build, to produce a single self-contained li
 
 project(clownmdemu_libretro LANGUAGES C)
 
+############################################
+# Standard libretro core boilerplate code. #
+############################################
+
+# Allow only the libretro API functions to be exported, improving optimization.
+set(CMAKE_C_VISIBILITY_PRESET hidden)
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
+
+# Avoid some relocation-related linker errors when building a shared library that depends on static libraries.
+if(BUILD_SHARED_LIBS)
+	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
+
+###################################################
+# End of standard libretro core boilerplate code. #
+###################################################
+
 if(UNITY_BUILD)
 	# A unity build must be used so that static builds produce a single static library,
 	# as libretro's CI does not account for more than one static library being produced.
@@ -21,12 +39,6 @@ else()
 		"source/libretro-interface.h"
 		"source/options.h"
 	)
-
-	# Avoid some relocation-related linker errors when building a shared library that depends on static libraries.
-	get_target_property(CLOWNMDEMU_TARGET_TYPE clownmdemu_libretro TYPE)
-	if(CLOWNMDEMU_TARGET_TYPE STREQUAL SHARED_LIBRARY)
-		set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-	endif()
 
 	add_subdirectory("common" EXCLUDE_FROM_ALL)
 	target_link_libraries(clownmdemu_libretro PRIVATE clownmdemu-frontend-common)
@@ -54,9 +66,6 @@ endif()
 
 # Give the code a way of determining that it is targeting libretro.
 target_compile_definitions(clownmdemu_libretro PRIVATE __LIBRETRO__)
-
-# Allow only the libretro API functions to be exported.
-set_target_properties(clownmdemu_libretro PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN ON)
 
 # Adjust the library's filename. This is relied upon by libretro's CI infrastructure.
 
@@ -88,3 +97,7 @@ if(GIT_FOUND)
 		target_compile_definitions(clownmdemu_libretro PRIVATE GIT_VERSION=" ${GIT_VERSION}")
 	endif()
 endif()
+
+###################################################
+# End of standard libretro core boilerplate code. #
+###################################################
