@@ -15,7 +15,8 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
 # Avoid some relocation-related linker errors when building a shared library that depends on static libraries.
-if(BUILD_SHARED_LIBS)
+get_property(SUPPORTS_SHARED GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
+if(SUPPORTS_SHARED AND BUILD_SHARED_LIBS)
 	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
